@@ -1,0 +1,11 @@
+basis sto-3g
+multiplicity 1
+psi_file bob
+
+atom H 0 .7 .4
+atom H 0 -.7 .4
+atom O 0 0 0
+
+op_kwarg include_pqrs True
+op_kwarg screen_commutators True
+op_kwarg screen_integrals True

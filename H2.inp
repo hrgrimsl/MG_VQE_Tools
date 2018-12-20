@@ -1,0 +1,6 @@
+basis sto-3g
+multiplicity 1
+
+atom H 0 .7 .4
+atom H 0 -.7 .4
+
