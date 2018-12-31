@@ -1,0 +1,18 @@
+basis sto-3g
+multiplicity 1
+psi_file bob
+
+atom H 0 0 0
+atom H 0 0 1.5
+atom H 0 0 10
+atom H 0 0 10.5
+
+op_kwarg include_pqrs False
+op_kwarg screen_commutators False
+op_kwarg screen_integrals False
+op_kwarg sort commutators
+
+method_kwarg algorithm VQE
+method_kwarg theta_tightness 1e-7 
+method_kwarg STAG_Tightness 1e-3
+
