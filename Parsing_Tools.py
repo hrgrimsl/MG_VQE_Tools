@@ -5,7 +5,7 @@ import openfermionpsi4
 def Get_Molecule(input_file):
     in_file = open(input_file)
     geometry = []
-    scratchdir = None
+    psi_file = 'temp'
     loc = False
     for line in in_file:
         if re.search('basis', line):
@@ -38,3 +38,11 @@ def Get_Op_Kwargs(input_file):
         if re.search('op_kwarg', line):
             op_kwargs[line.split()[1]]=line.split()[2]
     return op_kwargs
+
+def Get_Method_Kwargs(input_file):
+    in_file = open(input_file)
+    method_kwargs = {}
+    for line in in_file:
+        if re.search('method_kwarg', line):
+            method_kwargs[line.split()[1]]=line.split()[2]
+    return method_kwargs

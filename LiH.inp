@@ -3,17 +3,15 @@ multiplicity 1
 psi_file bob
 
 atom H 0 0 0
-atom H 0 0 1.5
-atom H 0 0 3
-atom H 0 0 4.5
+atom Li 0 0 2.39
+
 
 op_kwarg include_pqrs True
 op_kwarg screen_commutators False
 op_kwarg screen_integrals False
 op_kwarg spin_adapt True
-op_kwarg sort 2018
 
 method_kwarg algorithm ADAPT
-method_kwarg theta_tightness 1e-11 
-method_kwarg STAG_Tightness 1e-13
+method_kwarg theta_tightness 1e-7 
+method_kwarg ADAPT_tightness 1e-1
 
