@@ -49,6 +49,7 @@ class Operator_Bank:
 
          self.Full_Ops = self.Singles+self.Doubles
          self.Full_JW_Ops = self.JW_Singles+self.JW_Doubles
+
          #Spin adapt
          if self.spin_adapt == 'True':
              print('Spin adapting operators...')
@@ -190,32 +191,34 @@ class Operator_Bank:
                     ind_1 = self.Full_Ops.index([a+1,i+1,b+1,j+1])
                     ind_2 = self.Full_Ops.index([a,i,b,j])
                     ind_3 = self.Full_Ops.index([a+1,i+1,b,j])
-                    if a>=b+1 and i>=j+1:
+                    
+                    if [a,i,b+1,j+1] in self.Full_Ops:
                         ind_4 = self.Full_Ops.index([a,i,b+1,j+1])
-                        ind_5 = self.Full_Ops.index([a,i+1,b+1,j])
                         sign_4 = 1
-                        sign_5 = 1
-                    elif a<b+1 and i>=j+1:
+                    elif [b+1, i, a, j+1] in self.Full_Ops:
                         ind_4 = self.Full_Ops.index([b+1,i,a,j+1])
-                        ind_5 = self.Full_Ops.index([b+1,i+1,a,j])
                         sign_4 = -1
-                        sign_5 = -1
                     elif [b+1, j+1, a, i] in self.Full_Ops:
                         ind_4 = self.Full_Ops.index([b+1,j+1,a,i])
-                        ind_5 = self.Full_Ops.index([b+1,i+1,a,j])
-                        sign_4 = 1
+                        sign_4 = 1 
+                      
+                    if [a,i+1,b+1,j] in self.Full_Ops:
+                        ind_5 = self.Full_Ops.index([a,i+1,b+1,j])
                         sign_5 = -1
+                    elif [b+1,i+1,a,j]:
+                        ind_5 = self.Full_Ops.index([b+1,i+1,a,j])
+                        sign_5 = 1
+
                     if [a+1, i, b, j+1] in self.Full_Ops:
                         ind_6 = self.Full_Ops.index([a+1,i,b,j+1])
-                        sign_6 = 1
+                        sign_6 = -1
                     elif [a+1, j+1, b, i] in self.Full_Ops:
                         ind_6 = self.Full_Ops.index([a+1,j+1,b,i])
-                        sign_6 = -1
+                        sign_6 = 1
                     elif [i, a+1, j+1, b] in self.Full_Ops:
                         ind_6 = self.Full_Ops.index([i,a+1,j+1,b])
-                        sign_6 = -1
-                    else:
-                        print(op) 
+                        sign_6 = 1
+
                     New_JW_Ops.append(12**(-.5)*(2*self.Full_JW_Ops[ind_1]+2*self.Full_JW_Ops[ind_2]+self.Full_JW_Ops[ind_3]+sign_4*self.Full_JW_Ops[ind_4]-sign_5*self.Full_JW_Ops[ind_5]-sign_6*self.Full_JW_Ops[ind_6]))
                     New_Ops.append([a/2,i/2,b/2,j/2])
                     New_JW_Ops.append(.5*(self.Full_JW_Ops[ind_3]+sign_4*self.Full_JW_Ops[ind_4]+sign_5*self.Full_JW_Ops[ind_5]+sign_6*self.Full_JW_Ops[ind_6])) 
@@ -227,7 +230,7 @@ class Operator_Bank:
                     done.append(ind_5)
                     done.append(ind_6)
 
-                elif len(set([a,i,b,j]))==3 and (b==a or j==i):
+                elif len(set([a,i,b,j]))==3 or (len(set([a,i,b,j]))==2 and [a,i,b,j].count(a)!=2):
                     if [a, i, b+1, j+1] in self.Full_Ops:
                         ind1 = self.Full_Ops.index([a, i, b+1, j+1])
                         sign_1 = 1
@@ -255,14 +258,12 @@ class Operator_Bank:
                     New_Ops.append([i/2, a/2, j/2, b/2])
                     done.append(ind1)
                     done.append(ind2)
+                
 
                 elif len(set([a,i,b,j]))==2:
                     New_JW_Ops.append(self.Full_JW_Ops[self.Full_Ops.index(op)])
                     New_Ops.append([a/2, i/2, b/2, j/2])
                     done.append(self.Full_Ops.index(op))
-
-
-
         assert(len((done)) == len(set(done)))
         assert(len((done)) == len((self.Full_JW_Ops)))                             
 

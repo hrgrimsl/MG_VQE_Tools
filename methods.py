@@ -58,8 +58,11 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
 
 def UCC(molecule, ops, theta_tightness):
     #Initialize parameters
+    global last
+    last = 0
     parameters = [0 for op in ops.Full_Ops]
     print('Performing optimization of parameters...')
     optimization = scipy.optimize.minimize(UCC_SPE, parameters, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False}) 
     print(str(len(parameters))+' parameters optimized in '+str(optimization.nit)+' iterations!')
     return optimization
+
