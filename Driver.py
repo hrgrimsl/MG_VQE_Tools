@@ -8,7 +8,7 @@ import openfermion
 import scipy
 from methods import *
 from timeit import default_timer as timer
-
+import hat
 
 #Parse command line arguments, particularly an input file
 start = timer()
@@ -20,10 +20,12 @@ args = parser.parse_args()
 logging.basicConfig(filename=args.output, filemode='w', format='%(message)s')
 logging.getLogger().setLevel(logging.INFO)
 
-print('*' * 38)
+
+hat.hat()
+print('*' * 39)
 print('MaGE - Mayhall and Grimsley Eigentools')
-print('H. R. Grimsley, N. J. Mayhall')
-print('*' * 38)
+print('    H. R. Grimsley, N. J. Mayhall')
+print('*' * 39)
 #Parse the input file to form a molecule object
 print('Obtaining molecular data...')
 molecule = Get_Molecule(args.input)

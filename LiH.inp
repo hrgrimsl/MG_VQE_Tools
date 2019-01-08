@@ -5,13 +5,10 @@ psi_file bob
 atom H 0 0 0
 atom Li 0 0 2.39
 
-
 op_kwarg include_pqrs True
-op_kwarg screen_commutators False
-op_kwarg screen_integrals False
+op_kwarg screen_commutators True
 op_kwarg spin_adapt True
 
 method_kwarg algorithm ADAPT
-method_kwarg theta_tightness 1e-7 
+method_kwarg theta_tightness 1e-5 
 method_kwarg ADAPT_tightness 1e-1
-

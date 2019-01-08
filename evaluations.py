@@ -37,4 +37,11 @@ def Recurse(parameters, grad, hbra, ket, term, ops):
         Recurse(parameters, grad, hbra, ket, term, ops)
     return np.asarray(grad)
 
-    
+def UCC_SPE(parameters, ops):
+    ket = ops.HF_ket
+    gen = ops.Full_JW_Ops[0]*parameters[0]
+    for i in range(1, len(parameters)):
+        gen+=ops.Full_JW_Ops[i]*parameters[i]
+    energy = ket.transpose().dot(ops.JW_hamiltonian).dot(scipy.sparse.linalg.expm_multiply(gen, ket)).toarray()[0][0].real
+    return energy
+       

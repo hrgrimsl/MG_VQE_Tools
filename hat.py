@@ -1,0 +1,13 @@
+def hat():
+    print('  *')
+    print('  **    ')
+    print('  * *  -\"I cast magic missile at the darkness!\"')
+    print(' *****              }}}')
+    print('  * *  @                 }}} ')
+    print('   *   |  }}} ') 
+    print('  *****|      ')
+    print(' * *   |       }}} ')
+    print('*  *   |')
+    print('  * *  |   ') 
+    print(' *   * |    ')
+    print('*     * ')
