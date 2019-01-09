@@ -62,6 +62,8 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         gradients.append(scipy.linalg.norm(vector))
         print('Norm of all gradients: '+str(gradients[-1]))
         if abs(gradients[-1])<ADAPT_tightness:
+            if len(gradients) == 2:
+                OptRes = scipy.optimize.OptimizeResult(x=(), fun = molecule.hf_energy, nit = 0)
             continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         print('Newest full ansatz:\n')
@@ -108,6 +110,8 @@ def RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed):
         gradients.append(scipy.linalg.norm(vector))
         print('Norm of all gradients: '+str(gradients[-1]))
         if abs(gradients[-1])<ADAPT_tightness:
+            if len(gradients) == 2:
+                OptRes = scipy.optimize.OptimizeResult(x=(), fun = molecule.hf_energy, nit = 0)
             continue
         print('Newest full ansatz:\n')
         for term in ansatz.Full_Ops:
@@ -151,6 +155,8 @@ def LADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         gradients.append(scipy.linalg.norm(vector))
         print('Norm of all gradients: '+str(gradients[-1]))
         if abs(gradients[-1])<ADAPT_tightness or num==len(ops.Full_JW_Ops):
+            if len(gradients) == 2:
+                OptRes = scipy.optimize.OptimizeResult(x=(), fun = molecule.hf_energy, nit = 0)
             continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
