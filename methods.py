@@ -117,6 +117,7 @@ def LADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         print('Norm of all gradients: '+str(gradients[-1]))
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
+        print('Full ansatz: '+str(ansatz.Full_Ops))
         OptRes = VQE(molecule, ansatz, theta_tightness)
         parameters = OptRes.x
         energy = OptRes.fun
