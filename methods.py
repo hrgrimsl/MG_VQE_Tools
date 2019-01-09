@@ -38,6 +38,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
     current_ket = copy.copy(ops.HF_ket)
     parameters = []
     gradients = [None]
+    print('\nIteration '+str(len(parameters))+'.\n')
     while gradients[-1] == None or abs(gradients[-1])>ADAPT_tightness:
         grad = 0
         num = None
@@ -55,6 +56,16 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         gradients.append(scipy.linalg.norm(vector))
         print('Norm of all gradients: '+str(gradients[-1]))
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
+        print('Newest full ansatz:\n')
+        for term in ansatz.Full_Ops:
+            string = ''
+            for subterm in term:
+                if term.index(subterm)%2 == 0:
+                    string+=str(int(subterm))+'^t '
+                else:
+                    string+=str(int(subterm))+' '
+            print(string)
+        print('\n')        
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
         OptRes = VQE(molecule, ansatz, theta_tightness)
         parameters = OptRes.x
@@ -111,13 +122,14 @@ def LADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
             vector.append(comm) 
             if i == num:
                 grad = comm
+        print('\nIteration :'+str(len(parameters))+'\n')
         print('Next operation: '+str(ops.Full_Ops[num]))
         print('Next gradient: '+str(grad))
         gradients.append(scipy.linalg.norm(vector))
         print('Norm of all gradients: '+str(gradients[-1]))
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
-        print('Full ansatz: '+str(ansatz.Full_Ops))
+        print('Full ansatz: \n')
         OptRes = VQE(molecule, ansatz, theta_tightness)
         parameters = OptRes.x
         energy = OptRes.fun

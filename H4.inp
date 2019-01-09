@@ -13,7 +13,7 @@ op_kwarg screen_integrals False
 op_kwarg spin_adapt True
 
 
-method_kwarg algorithm LADAPT
+method_kwarg algorithm ADAPT
 method_kwarg theta_tightness 1e-4
 method_kwarg ADAPT_tightness 1e-2
 method_kwarg RADAPT_seed 1
