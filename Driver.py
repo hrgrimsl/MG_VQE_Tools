@@ -45,6 +45,7 @@ HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(list(range(0
 print('Constructing operator bank...')
 ops = Operator_Bank(molecule, **Get_Op_Kwargs(args.input))
 print(str(len(ops.Full_Ops))+' operations!')
+
 #Run optimization procedure
 outcome = Optimize(molecule, ops, logging, **Get_Method_Kwargs(args.input))
 end = timer()
