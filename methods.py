@@ -50,8 +50,6 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
             vector.append(comm) 
             if abs(comm)>abs(grad):
                 grad = comm
-<<<<<<< HEAD
-<<<<<<< HEAD
                 num = i 
         print('\nIteration '+str(len(parameters))+'.\n')
         print('Significant gradients:\n')
@@ -59,19 +57,6 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
             if abs(vector[i])>ADAPT_tightness:
                 print(str(vector[i])+' '+str(ops.Full_Ops[i]))
         print('\n')
-=======
-=======
->>>>>>> 95c740359aedaad677411e8004e40767affa7777
-                num = i
-    
-        print()
-        print(" -----------------------------------------------------------------")
-        print('         ADAPT-VQE Iteration %i' %i_iter )
-        print(" -----------------------------------------------------------------")
-<<<<<<< HEAD
->>>>>>> 95c740359aedaad677411e8004e40767affa7777
-=======
->>>>>>> 95c740359aedaad677411e8004e40767affa7777
         print('Next operation: '+str(ops.Full_Ops[num]))
         print('Next gradient: '+str(grad))
         gradients.append(scipy.linalg.norm(vector))
@@ -83,22 +68,11 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
         for term in ansatz.Full_Ops:
             string = ''
-<<<<<<< HEAD
             for subterm in range(0, len(term)):
                 if subterm%2 == 0:
                     string+=str(int(term[subterm]))+'^t '
                 else:
                     string+=str(int(term[subterm]))+' '
-=======
-            for subterm in term:
-                if term.index(subterm)%2 == 0:
-                    string+="%3i'"%(int(subterm))
-                else:
-                    string+="%3i"%(int(subterm))
-<<<<<<< HEAD
->>>>>>> 95c740359aedaad677411e8004e40767affa7777
-=======
->>>>>>> 95c740359aedaad677411e8004e40767affa7777
             print(string)
         print('\n')        
         OptRes = VQE(molecule, ansatz, theta_tightness)
