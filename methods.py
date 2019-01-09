@@ -70,9 +70,9 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
             string = ''
             for subterm in range(0, len(term)):
                 if subterm%2 == 0:
-                    string+=str(int(term[subterm]))+'^t '
+                    string+="%3i'" %int(term[subterm])
                 else:
-                    string+=str(int(term[subterm]))+' '
+                    string+="%3i" %int(term[subterm])
             print(string)
         print('\n')        
         OptRes = VQE(molecule, ansatz, theta_tightness)
