@@ -220,7 +220,7 @@ class Operator_Bank:
                         sign_6 = 1
 
                     New_JW_Ops.append(12**(-.5)*(2*self.Full_JW_Ops[ind_1]+2*self.Full_JW_Ops[ind_2]+self.Full_JW_Ops[ind_3]+sign_4*self.Full_JW_Ops[ind_4]-sign_5*self.Full_JW_Ops[ind_5]-sign_6*self.Full_JW_Ops[ind_6]))
-                    New_Ops.append([a/2,i/2,b/2,j/2])
+                    New_Ops.append([int(a/2),int(i/2),int(b/2),int(j/2)])
                     New_JW_Ops.append(.5*(self.Full_JW_Ops[ind_3]+sign_4*self.Full_JW_Ops[ind_4]+sign_5*self.Full_JW_Ops[ind_5]+sign_6*self.Full_JW_Ops[ind_6])) 
                     New_Ops.append([int(a/2),int(i/2),int(b/2),int(j/2)])
                     done.append(ind_1)
@@ -255,14 +255,14 @@ class Operator_Bank:
                         ind2 = self.Full_Ops.index([i+1,a+1,j,b])
                         sign_2 = -1
                     New_JW_Ops.append(2**(-.5)*(sign_1*self.Full_JW_Ops[ind1]+sign_2*self.Full_JW_Ops[ind2]))
-                    New_Ops.append([i/2, a/2, j/2, b/2])
+                    New_Ops.append([int(i/2), int(a/2), int(j/2), int(b/2)])
                     done.append(ind1)
                     done.append(ind2)
                 
 
                 elif len(set([a,i,b,j]))==2:
                     New_JW_Ops.append(self.Full_JW_Ops[self.Full_Ops.index(op)])
-                    New_Ops.append([a/2, i/2, b/2, j/2])
+                    New_Ops.append([int(a/2), int(i/2), int(b/2), int(j/2)])
                     done.append(self.Full_Ops.index(op))
         assert(len((done)) == len(set(done)))
         assert(len((done)) == len((self.Full_JW_Ops)))                             

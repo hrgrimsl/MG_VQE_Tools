@@ -39,6 +39,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
     parameters = []
     gradients = [None]
 
+    i_iter = 0
     while gradients[-1] == None or abs(gradients[-1])>ADAPT_tightness:
         grad = 0
         num = None
@@ -50,8 +51,11 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
             if abs(comm)>abs(grad):
                 grad = comm
                 num = i
-        
-        print('\nIteration '+str(len(parameters))+'.\n')
+    
+        print()
+        print(" -----------------------------------------------------------------")
+        print('         ADAPT-VQE Iteration %i' %i_iter )
+        print(" -----------------------------------------------------------------")
         print('Next operation: '+str(ops.Full_Ops[num]))
         print('Next gradient: '+str(grad))
         gradients.append(scipy.linalg.norm(vector))
@@ -63,9 +67,9 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
             string = ''
             for subterm in term:
                 if term.index(subterm)%2 == 0:
-                    string+=str(int(subterm))+'^t '
+                    string+="%3i'"%(int(subterm))
                 else:
-                    string+=str(int(subterm))+' '
+                    string+="%3i"%(int(subterm))
             print(string)
         print('\n')        
         OptRes = VQE(molecule, ansatz, theta_tightness)
@@ -74,6 +78,8 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         current_ket = copy.copy(ops.HF_ket)
         for i in reversed(range(0, len(parameters))):
              current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 
+
+        i_iter += 1
     return OptRes
 
 def RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed):
