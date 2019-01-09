@@ -38,7 +38,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
     current_ket = copy.copy(ops.HF_ket)
     parameters = []
     gradients = [None]
-    print('\nIteration '+str(len(parameters))+'.\n')
+
     while gradients[-1] == None or abs(gradients[-1])>ADAPT_tightness:
         grad = 0
         num = None
@@ -50,13 +50,15 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
             if abs(comm)>abs(grad):
                 grad = comm
                 num = i
-
+        
+        print('\nIteration '+str(len(parameters))+'.\n')
         print('Next operation: '+str(ops.Full_Ops[num]))
         print('Next gradient: '+str(grad))
         gradients.append(scipy.linalg.norm(vector))
         print('Norm of all gradients: '+str(gradients[-1]))
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         print('Newest full ansatz:\n')
+        ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
         for term in ansatz.Full_Ops:
             string = ''
             for subterm in term:
@@ -66,7 +68,6 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
                     string+=str(int(subterm))+' '
             print(string)
         print('\n')        
-        ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
         OptRes = VQE(molecule, ansatz, theta_tightness)
         parameters = OptRes.x
         energy = OptRes.fun
