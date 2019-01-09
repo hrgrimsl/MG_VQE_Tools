@@ -49,9 +49,13 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
             vector.append(comm) 
             if abs(comm)>abs(grad):
                 grad = comm
-                num = i
-        
+                num = i 
         print('\nIteration '+str(len(parameters))+'.\n')
+        print('Significant gradients:\n')
+        for i in range(0, len(vector)):
+            if abs(vector[i])>ADAPT_tightness:
+                print(str(vector[i])+' '+str(ops.Full_Ops[i]))
+        print('\n')
         print('Next operation: '+str(ops.Full_Ops[num]))
         print('Next gradient: '+str(grad))
         gradients.append(scipy.linalg.norm(vector))
@@ -63,11 +67,11 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
         for term in ansatz.Full_Ops:
             string = ''
-            for subterm in term:
-                if term.index(subterm)%2 == 0:
-                    string+=str(int(subterm))+'^t '
+            for subterm in range(0, len(term)):
+                if subterm%2 == 0:
+                    string+=str(int(term[subterm]))+'^t '
                 else:
-                    string+=str(int(subterm))+' '
+                    string+=str(int(term[subterm]))+' '
             print(string)
         print('\n')        
         OptRes = VQE(molecule, ansatz, theta_tightness)
@@ -95,10 +99,23 @@ def RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed):
             vector.append(comm) 
             if i == num:
                 grad = comm
+        print('\nIteration '+str(len(parameters))+'.\n')
         print('Next operation: '+str(ops.Full_Ops[num]))
         print('Next gradient: '+str(grad))
         gradients.append(scipy.linalg.norm(vector))
         print('Norm of all gradients: '+str(gradients[-1]))
+        if abs(gradients[-1])<ADAPT_tightness:
+            continue
+        print('Newest full ansatz:\n')
+        for term in ansatz.Full_Ops:
+            string = ''
+            for subterm in range(0, len(term)):
+                if subterm%2 == 0:
+                    string+=str(int(term[subterm]))+'^t '
+                else:
+                    string+=str(int(term[subterm]))+' '
+            print(string)
+        print('\n')        
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
         OptRes = VQE(molecule, ansatz, theta_tightness)
@@ -130,9 +147,20 @@ def LADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         print('Next gradient: '+str(grad))
         gradients.append(scipy.linalg.norm(vector))
         print('Norm of all gradients: '+str(gradients[-1]))
+        if abs(gradients[-1])<ADAPT_tightness or num==len(ops.Full_JW_Ops):
+            continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
         print('Full ansatz: \n')
+        for term in ansatz.Full_Ops:
+            string = ''
+            for subterm in range(0, len(term)):
+                if subterm%2 == 0:
+                    string+=str(int(term[subterm]))+'^t '
+                else:
+                    string+=str(int(term[subterm]))+' '
+            print(string)
+        print('\n')        
         OptRes = VQE(molecule, ansatz, theta_tightness)
         parameters = OptRes.x
         energy = OptRes.fun
