@@ -56,6 +56,8 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         print('Next gradient: '+str(grad))
         gradients.append(scipy.linalg.norm(vector))
         print('Norm of all gradients: '+str(gradients[-1]))
+        if abs(gradients[-1])<ADAPT_tightness:
+            continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         print('Newest full ansatz:\n')
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
