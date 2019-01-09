@@ -11,7 +11,7 @@ from timeit import default_timer as timer
 import hat
 
 #Parse command line arguments, particularly an input file
-start = timer()
+
 parser = argparse.ArgumentParser()
 parser.add_argument("input", type=str)
 parser.add_argument("output", nargs='?', default='app.log')
@@ -42,7 +42,10 @@ logging.info('FCI = '+str(molecule.fci_energy))
 #Obtain some useful global data
 HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(list(range(0,molecule.n_electrons)), molecule.n_qubits)).transpose()
 print('Constructing operator bank...')
+start = timer()
 ops = Operator_Bank(molecule, **Get_Op_Kwargs(args.input))
+end = timer()
+print('Operators constructed in '+str(end-start)+' seconds!')
 print(str(len(ops.Full_Ops))+' operations!')
 #Run optimization procedure
 outcome = Optimize(molecule, ops, logging, **Get_Method_Kwargs(args.input))
