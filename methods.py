@@ -1,6 +1,6 @@
 from evaluations import *
 import copy
-from Classes import *
+from Classes2 import *
 import random
 
 
@@ -55,12 +55,12 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         print('Significant gradients:\n')
         for i in range(0, len(vector)):
             if abs(vector[i])>ADAPT_tightness:
-                print(str(vector[i])+' '+str(ops.Full_Ops[i]))
+                print('{:+10.14f}'.format(vector[i])+' {:10s}'.format(str(ops.Full_Ops[i])))
         print('\n')
-        print('Next operation: '+str(ops.Full_Ops[num]))
-        print('Next gradient: '+str(grad))
+        print('Next operation: {:10s}'.format(str(ops.Full_Ops[num])))
+        print('Next gradient: {:+10.14f}'.format(grad))
         gradients.append(scipy.linalg.norm(vector))
-        print('Norm of all gradients: '+str(gradients[-1]))
+        print('Norm of all gradients: {:+10.14f}'.format(gradients[-1]))
         if abs(gradients[-1])<ADAPT_tightness:
             if len(gradients) == 2:
                 OptRes = scipy.optimize.OptimizeResult(x=(), fun = molecule.hf_energy, nit = 0)
@@ -72,7 +72,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         parameters = OptRes.x
         print('Newest full ansatz:\n')
         for term in range(0, len(ansatz.Full_Ops)):
-            string = str(parameters[term])+' '
+            string = '%+14.10f'%float(parameters[term])+' '
             for subterm in range(0, len(ansatz.Full_Ops[term])):
                 if subterm%2 == 0:
                     string+="%3i'" %int(ansatz.Full_Ops[term][subterm])

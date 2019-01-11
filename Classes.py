@@ -53,7 +53,7 @@ class Operator_Bank:
          if self.spin_adapt == 'True':
              print('Spin adapting operators...')
              self.Spin_Adapt()
-
+         print(self.Full_Ops)
          
          for op in self.Full_SQ_Ops:
              op = openfermion.normal_ordered(op)
@@ -271,7 +271,7 @@ class Operator_Bank:
                     New_SQ_Ops.append(self.Full_SQ_Ops[self.Full_Ops.index(op)])
                     New_Ops.append([int(a/2), int(i/2), int(b/2), int(j/2)])
                     done.append(self.Full_Ops.index(op))
-                print(New_SQ_Ops[-1])
+
         print(New_Ops)
         assert(len((done)) == len(set(done)))
         assert(len((done)) == len((self.Full_SQ_Ops)))

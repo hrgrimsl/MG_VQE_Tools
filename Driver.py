@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from Parsing_Tools import *
-from Classes import *
+from Classes2 import *
 import os
 import argparse
 import logging
