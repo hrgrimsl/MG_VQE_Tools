@@ -66,19 +66,20 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
                 OptRes = scipy.optimize.OptimizeResult(x=(), fun = molecule.hf_energy, nit = 0)
             continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
-        print('Newest full ansatz:\n')
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
-        for term in ansatz.Full_Ops:
-            string = ''
-            for subterm in range(0, len(term)):
-                if subterm%2 == 0:
-                    string+="%3i'" %int(term[subterm])
-                else:
-                    string+="%3i" %int(term[subterm])
-            print(string)
-        print('\n')        
+
         OptRes = VQE(molecule, ansatz, theta_tightness)
         parameters = OptRes.x
+        print('Newest full ansatz:\n')
+        for term in range(0, len(ansatz.Full_Ops)):
+            string = str(parameters[term])+' '
+            for subterm in range(0, len(ansatz.Full_Ops[term])):
+                if subterm%2 == 0:
+                    string+="%3i'" %int(ansatz.Full_Ops[term][subterm])
+                else:
+                    string+="%3i" %int(ansatz.Full_Ops[term][subterm])
+            print(string)
+        print('\n')        
         energy = OptRes.fun
         current_ket = copy.copy(ops.HF_ket)
         for i in reversed(range(0, len(parameters))):

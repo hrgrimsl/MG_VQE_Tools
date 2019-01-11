@@ -48,14 +48,17 @@ class Operator_Bank:
 
          self.Full_Ops = self.Singles+self.Doubles
          self.Full_SQ_Ops = self.SQ_Singles+self.SQ_Doubles
+
          #Spin adapt
          if self.spin_adapt == 'True':
              print('Spin adapting operators...')
              self.Spin_Adapt()
+
          
          for op in self.Full_SQ_Ops:
-             self.Full_JW_Ops.append(openfermion.transforms.get_sparse_operator(op, n_qubits = self.molecule.n_qubits))
-                
+             op = openfermion.normal_ordered(op)
+             if op.many_body_order()>0:
+                 self.Full_JW_Ops.append((1/np.sqrt(2))*openfermion.transforms.get_sparse_operator(op, n_qubits = self.molecule.n_qubits))
          #Apply filters
          if self.screen_commutators == 'True':
              print('Screening by commutators with Hamiltonian (HF ansatz)...')
@@ -110,10 +113,10 @@ class Operator_Bank:
                 j,i = pairs[p]
                 b,a = pairs[q]
                 if i%2+j%2==a%2+b%2:
-                    two_elec = openfermion.FermionOperator(((a,1),(i,0),(b,1),(j,0)))-openfermion.FermionOperator(((j,1),(b,0),(i,1),(a,0)))
+                    two_elec = openfermion.FermionOperator(((a,1),(b,1),(i,0),(j,0)))-openfermion.FermionOperator(((j,1),(i,1),(b,0),(a,0)))
                     self.SQ_Doubles.append(two_elec)
                     self.Doubles.append([a,i,b,j])
-
+                    print([a,i,b,j])
      
     def IJAB(self):
         
@@ -146,7 +149,7 @@ class Operator_Bank:
                 j, i = occ
                 b, a = nocc
                 if a%2+b%2==i%2+j%2:
-                    two_elec = openfermion.FermionOperator(((a,1),(i,0),(b,1),(j,0)))-openfermion.FermionOperator(((j,1),(b,0),(i,1),(a,0)))
+                    two_elec = openfermion.FermionOperator(((a,1),(b,1),(i,0),(j,0)))-openfermion.FermionOperator(((j,1),(i,1),(b,0),(a,0)))
                     self.Doubles.append([a,i,b,j])
                     self.SQ_Doubles.append(two_elec)
 
@@ -174,7 +177,7 @@ class Operator_Bank:
                 if ([chi_a*2+1, chi_i*2+1] not in self.Full_Ops):
                     continue
 
-                New_SQ_Ops.append(self.Full_SQ_Ops[(self.Full_Ops.index([chi_a*2+1, chi_i*2+1]))]+self.Full_SQ_Ops[(self.Full_Ops.index([chi_a*2, chi_i*2]))])
+                New_SQ_Ops.append(1/np.sqrt(2)*self.Full_SQ_Ops[(self.Full_Ops.index([chi_a*2+1, chi_i*2+1]))]+1/np.sqrt(2)*self.Full_SQ_Ops[(self.Full_Ops.index([chi_a*2, chi_i*2]))])
                 New_Ops.append([chi_a, chi_i])
                 done.append(self.Full_Ops.index([chi_a*2, chi_i*2]))
                 done.append(self.Full_Ops.index([chi_a*2+1, chi_i*2+1]))
@@ -203,7 +206,7 @@ class Operator_Bank:
                     elif [b+1, j+1, a, i] in self.Full_Ops:
                         ind_4 = self.Full_Ops.index([b+1,j+1,a,i])
                         sign_4 = 1 
-                      
+
                     if [a,i+1,b+1,j] in self.Full_Ops:
                         ind_5 = self.Full_Ops.index([a,i+1,b+1,j])
                         sign_5 = -1
@@ -221,8 +224,10 @@ class Operator_Bank:
                         ind_6 = self.Full_Ops.index([i,a+1,j+1,b])
                         sign_6 = 1
 
-                    New_SQ_Ops.append(12**(-.5)*(2*self.Full_SQ_Ops[ind_1]+2*self.Full_SQ_Ops[ind_2]+self.Full_SQ_Ops[ind_3]+sign_4*self.Full_SQ_Ops[ind_4]-sign_5*self.Full_SQ_Ops[ind_5]-sign_6*self.Full_SQ_Ops[ind_6]))
-                    New_Ops.append([a/2,i/2,b/2,j/2])
+
+
+                    New_SQ_Ops.append(1/np.sqrt(12)*(2*self.Full_SQ_Ops[ind_1]+2*self.Full_SQ_Ops[ind_2]+self.Full_SQ_Ops[ind_3]+sign_4*self.Full_SQ_Ops[ind_4]-sign_5*self.Full_SQ_Ops[ind_5]-sign_6*self.Full_SQ_Ops[ind_6]))
+                    New_Ops.append([int(a/2),int(i/2),int(b/2),int(j/2)])
                     New_SQ_Ops.append(.5*(self.Full_SQ_Ops[ind_3]+sign_4*self.Full_SQ_Ops[ind_4]+sign_5*self.Full_SQ_Ops[ind_5]+sign_6*self.Full_SQ_Ops[ind_6])) 
                     New_Ops.append([int(a/2),int(i/2),int(b/2),int(j/2)])
                     done.append(ind_1)
@@ -238,7 +243,7 @@ class Operator_Bank:
                         sign_1 = 1
                     elif [i, a, j+1, b+1] in self.Full_Ops:
                         ind1 = self.Full_Ops.index([i,a,j+1,b+1])
-                        sign_1 = -1                 
+                        sign_1 = -1
                     elif [b+1, j+1, a, i] in self.Full_Ops:
                         ind1 = self.Full_Ops.index([b+1, j+1, a, i])
                         sign_1 = 1
@@ -256,21 +261,28 @@ class Operator_Bank:
                     elif [i+1, a+1, j, b] in self.Full_Ops:
                         ind2 = self.Full_Ops.index([i+1,a+1,j,b])
                         sign_2 = -1
-                    New_SQ_Ops.append(2**(-.5)*(sign_1*self.Full_SQ_Ops[ind1]+sign_2*self.Full_SQ_Ops[ind2]))
-                    New_Ops.append([i/2, a/2, j/2, b/2])
+                    New_SQ_Ops.append(1/np.sqrt(2)*(sign_1*self.Full_SQ_Ops[ind1]+sign_2*self.Full_SQ_Ops[ind2]))
+                    New_Ops.append([int(i/2), int(a/2), int(j/2), int(b/2)])
                     done.append(ind1)
                     done.append(ind2)
                 
 
                 elif len(set([a,i,b,j]))==2:
                     New_SQ_Ops.append(self.Full_SQ_Ops[self.Full_Ops.index(op)])
-                    New_Ops.append([a/2, i/2, b/2, j/2])
+                    New_Ops.append([int(a/2), int(i/2), int(b/2), int(j/2)])
                     done.append(self.Full_Ops.index(op))
+                print(New_SQ_Ops[-1])
+        print(New_Ops)
         assert(len((done)) == len(set(done)))
-        assert(len((done)) == len((self.Full_SQ_Ops)))                             
+        assert(len((done)) == len((self.Full_SQ_Ops)))
+        self.Full_SQ_Ops = []
+        self.Full_Ops = []                             
+        for op in range(0, len(New_SQ_Ops)):
+            op2 = openfermion.normal_ordered(New_SQ_Ops[op])
+            if op2.many_body_order()>0:
+                self.Full_SQ_Ops.append(op2)
+                self.Full_Ops.append(New_Ops[op])
 
-        self.Full_SQ_Ops = New_SQ_Ops
-        self.Full_Ops = New_Ops                               
     def Sort_Commutators(self):
        comms = []
        for op in self.Full_JW_Ops:

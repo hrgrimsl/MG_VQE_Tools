@@ -14,6 +14,6 @@ op_kwarg spin_adapt True
 
 
 method_kwarg algorithm ADAPT
-method_kwarg theta_tightness 1e-4
-method_kwarg ADAPT_tightness 1
+method_kwarg theta_tightness 1e-7
+method_kwarg ADAPT_tightness 1e-16
 method_kwarg RADAPT_seed 1
