@@ -60,7 +60,6 @@ class Operator_Bank:
              op = openfermion.normal_ordered(op)
              if op.many_body_order()>0:
                  self.Full_JW_Ops.append(openfermion.transforms.get_sparse_operator(op, n_qubits = self.molecule.n_qubits))
-         print(self.Full_Ops)
          #Apply filters
          if self.screen_commutators == 'True':
              print('Screening by commutators with Hamiltonian (HF ansatz)...')
@@ -406,6 +405,7 @@ class Ansatz_Operations:
         self.HF_ket = ops.HF_ket
         self.molecule = ops.molecule
         self.JW_hamiltonian = ops.JW_hamiltonian
+        self.milestones = []
     def __str__(self):
         return(str(self.Full_Ops))
 
