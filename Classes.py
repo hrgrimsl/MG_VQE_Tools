@@ -304,5 +304,6 @@ class Ansatz_Operations:
         self.HF_ket = ops.HF_ket
         self.molecule = ops.molecule
         self.JW_hamiltonian = ops.JW_hamiltonian
+        self.milestones = []
     def __str__(self):
         return(str(self.Full_Ops))

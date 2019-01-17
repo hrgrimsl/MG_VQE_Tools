@@ -42,6 +42,7 @@ def UCC_SPE(parameters, ops):
     gen = ops.Full_JW_Ops[0]*parameters[0]
     for i in range(1, len(parameters)):
         gen+=ops.Full_JW_Ops[i]*parameters[i]
-    energy = ket.transpose().dot(ops.JW_hamiltonian).dot(scipy.sparse.linalg.expm_multiply(gen, ket)).toarray()[0][0].real
+    ket = scipy.sparse.linalg.expm_multiply(gen, ket)
+    energy = ket.transpose().dot(ops.JW_hamiltonian).dot(ket).toarray()[0][0].real
     return energy
        

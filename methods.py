@@ -10,7 +10,10 @@ def Optimize(molecule, ops, logging, **kwargs):
     ADAPT_tightness = float(kwargs.get('ADAPT_tightness', '1e-5'))
     seed = float(kwargs.get('RADAPT_seed', 0))
     if algorithm == 'VQE':
-        outcome = VQE(molecule, ops, theta_tightness)
+        parameters = []
+        for i in range(0, len(ops.Full_Ops)):
+            parameters.append(0)
+        outcome = VQE(molecule, parameters, ops, theta_tightness, logging)
     if algorithm == 'ADAPT':
         outcome = ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging)
     if algorithm == 'UCC':
@@ -22,15 +25,13 @@ def Optimize(molecule, ops, logging, **kwargs):
 
     return outcome
 
-def VQE(molecule, ops, theta_tightness):
+def VQE(molecule, parameters, ops, theta_tightness, logging):
     #Initialize parameters
-    parameters = []
-    for i in range(0, len(ops.Full_Ops)):
-        parameters.append(0)
     print('Performing optimization of parameters...')
     optimization = scipy.optimize.minimize(Trotter_SPE, parameters, jac = Trotter_Gradient, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False})
     print(str(len(parameters))+' parameters optimized in '+str(optimization.nit)+' iterations!')
     print('Current energy: '+str(optimization.fun))
+    logging.info(str(optimization.fun))
     return optimization
 
 def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
@@ -38,7 +39,6 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
     current_ket = copy.copy(ops.HF_ket)
     parameters = []
     gradients = [None]
-
     i_iter = 0
     while gradients[-1] == None or abs(gradients[-1])>ADAPT_tightness:
         grad = 0
@@ -61,14 +61,25 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         print('Next gradient: {:+10.14f}'.format(grad))
         gradients.append(scipy.linalg.norm(vector))
         print('Norm of all gradients: {:+10.14f}'.format(gradients[-1]))
+
+
+        #Comment this stuff out later
+        if abs(gradients[-1])<1e-1 and 1e-1 not in ansatz.milestones:
+            ansatz.milestones.append(1e-1)
+            logging.info('eps1 '+str(OptRes.x))
+        if abs(gradients[-1])<1e-2 and 1e-2 not in ansatz.milestones:
+            logging.info('eps2 '+str(OptRes.x))
+            ansatz.milestones.append(1e-2)
+
         if abs(gradients[-1])<ADAPT_tightness:
             if len(gradients) == 2:
                 OptRes = scipy.optimize.OptimizeResult(x=(), fun = molecule.hf_energy, nit = 0)
             continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
-
-        OptRes = VQE(molecule, ansatz, theta_tightness)
+        parameters = list(parameters)
+        parameters.insert(0, 0)
+        OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
         print('Newest full ansatz:\n')
         for term in range(0, len(ansatz.Full_Ops)):
@@ -89,6 +100,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
     return OptRes
 
 def RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed):
+    assert(len(ops.Full_Ops)==len(ops.Full_JW_Ops))
     ansatz = Ansatz_Operations(ops)
     current_ket = copy.copy(ops.HF_ket)
     parameters = []
@@ -105,7 +117,7 @@ def RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed):
             vector.append(comm) 
             if num == i:
                 grad = comm
-        num = random.randint(0, len(ops.Full_JW_Ops))
+        num = random.randint(0, len(ops.Full_Ops)-1)
         print('\nIteration '+str(len(parameters))+'.\n')
         print('Significant gradients:\n')
         for i in range(0, len(vector)):
@@ -122,8 +134,10 @@ def RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed):
             continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
+        parameters = list(parameters)
+        parameters.insert(0, 0)
 
-        OptRes = VQE(molecule, ansatz, theta_tightness)
+        OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
         print('Newest full ansatz:\n')
         for term in range(0, len(ansatz.Full_Ops)):
@@ -177,8 +191,12 @@ def LADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
             continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
+        parameters = list(parameters)
 
-        OptRes = VQE(molecule, ansatz, theta_tightness)
+        parameters.insert(0, 0)
+       
+
+        OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
         print('Newest full ansatz:\n')
         for term in range(0, len(ansatz.Full_Ops)):
@@ -199,3 +217,10 @@ def LADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         num += 1
     return OptRes
 
+def UCC(molecule, ops, theta_tightness, logging):
+    parameters = []
+    for i in range(0, len(ops.Full_Ops)):
+        parameters.append(0)
+    optimization = scipy.optimize.minimize(UCC_SPE, parameters, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False})
+    return optimization
+    
