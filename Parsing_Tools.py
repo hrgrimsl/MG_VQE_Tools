@@ -9,9 +9,11 @@ def Get_Molecule(input_file):
     loc = False
     for line in in_file:
         if re.search('basis', line):
-            basis = line.split()[-1]
+            basis = line.split()[1]
         elif re.search('multiplicity', line):
-            multiplicity = int(line.split()[-1])
+            multiplicity = int(line.split()[1])
+        elif re.search('charge', line):
+            charge = int(line.split()[1])
         elif re.search('atom', line):
             atom = []
             full_string = line.split()
@@ -22,11 +24,13 @@ def Get_Molecule(input_file):
             atom.append(tuple(cart_tuple))
             geometry.append(tuple(atom))
         elif re.search('psi_file', line):
-            psi_file = line.split()[-1]
-
+            psi_file = line.split()[1]
         elif re.search('loc', line):
-            loc  = line.split()[-1]
-    molecule = openfermion.hamiltonians.MolecularData(geometry, basis, multiplicity)
+            loc  = line.split()[1]
+
+        elif re.search('nfd', line):
+            nfd = line.split()[1]
+    molecule = openfermion.hamiltonians.MolecularData(geometry, basis, multiplicity, charge)
     molecule.filename = psi_file
     molecule = openfermionpsi4.run_psi4(molecule, run_scf = 1, run_mp2 = 1, run_ccsd = 1, run_cisd = 1, run_fci = 1, localize = loc)
     return molecule

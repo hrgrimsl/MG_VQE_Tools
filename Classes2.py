@@ -8,24 +8,30 @@ import math
 
 class Operator_Bank:
     def __init__(self, molecule, **kwargs):
+         self.ecp = int(kwargs.get('ecp', '0'))
          #Associate a Hamiltonian with this system
          self.molecule = molecule
-         self.hamiltonian = molecule.get_molecular_hamiltonian()
+         if self.ecp == 0:
+             self.hamiltonian = molecule.get_molecular_hamiltonian()
+         else:
+             core = list(range(0, int(self.ecp)))
+             valence = list(range(int(self.ecp), self.molecule.n_orbitals))
+             self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = core, active_indices = valence)
          self.two_index_hamiltonian = self.hamiltonian.one_body_tensor
          self.four_index_hamiltonian = self.hamiltonian.two_body_tensor
          self.JW_hamiltonian = openfermion.transforms.get_sparse_operator(self.hamiltonian)         
 
          #Construct spaces
-         self.aoccs = [i for i in range(0, self.molecule.n_electrons) if i%2 == 0]
+         self.aoccs = [i for i in range(0, self.molecule.n_electrons) if i%2 == 0 and i>=2*int(self.ecp)]
          self.anoccs = [i for i in range(self.molecule.n_electrons, self.molecule.n_orbitals*2) if i%2 == 0]
-         self.boccs = [i for i in range(0, self.molecule.n_electrons) if i%2 == 1]
+         self.boccs = [i for i in range(0, self.molecule.n_electrons) if i%2 == 1 and i>=2*int(self.ecp)]
          self.bnoccs = [i for i in range(self.molecule.n_electrons, self.molecule.n_orbitals*2) if i%2 == 1]
          self.alphas = self.aoccs+self.anoccs
          self.betas = self.boccs+self.bnoccs
 
          #Construct reference ket
-         self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(list(range(0, molecule.n_electrons)), molecule.n_qubits)).transpose()
-
+         self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(list(range(0, molecule.n_electrons-2*self.ecp)), molecule.n_qubits-2*int(self.ecp))).transpose()
+         print(self.HF_ket)
          #Parse kwargs
          self.include_pqrs = kwargs.get('include_pqrs', 'False')
          self.screen_commutators = kwargs.get('screen_commutators', 'False')
@@ -59,7 +65,7 @@ class Operator_Bank:
          for op in self.Full_SQ_Ops:
              op = openfermion.normal_ordered(op)
              if op.many_body_order()>0:
-                 self.Full_JW_Ops.append(openfermion.transforms.get_sparse_operator(op, n_qubits = self.molecule.n_qubits))
+                 self.Full_JW_Ops.append(openfermion.transforms.get_sparse_operator(op, n_qubits = self.molecule.n_qubits-int(self.ecp)*2))
          #Apply filters
          if self.screen_commutators == 'True':
              print('Screening by commutators with Hamiltonian (HF ansatz)...')
@@ -91,24 +97,24 @@ class Operator_Bank:
         for i in self.alphas:
             for a in self.alphas:
                 if a>i:
-                    one_elec = openfermion.FermionOperator(((a,1),(i,0)))-openfermion.FermionOperator(((i,1),(a,0)))
+                    one_elec = openfermion.FermionOperator(((a-2*self.ecp,1),(i-2*self.ecp,0)))-openfermion.FermionOperator(((i-2*self.ecp,1),(a-self.ecp,0)))
                     self.SQ_Singles.append(one_elec)
-                    self.Singles.append([a,i])
+                    self.Singles.append([a-2*self.ecp,i-2*self.ecp])
 
         #bb
         for i in self.betas:
             for a in self.betas:
                 if a>i:
-                    one_elec = openfermion.FermionOperator(((a,1),(i,0)))-openfermion.FermionOperator(((i,1),(a,0)))
+                    one_elec = openfermion.FermionOperator(((a-2*self.ecp,1),(i-2*self.ecp,0)))-openfermion.FermionOperator(((i-2*self.ecp,1),(a-2*self.ecp,0)))
                     self.SQ_Singles.append(one_elec)
-                    self.Singles.append([a,i])
+                    self.Singles.append([a-2*self.ecp,i-2*self.ecp])
 
     
         #Doubles
         pairs = []
-        for i in range(0, self.molecule.n_orbitals*2):
+        for i in range(int(self.ecp)*2, self.molecule.n_orbitals*2):
             for j in range(i+1, self.molecule.n_orbitals*2):
-                pairs.append([i,j])
+                pairs.append([i-2*self.ecp,j-2*self.ecp])
         for p in range(0, len(pairs)):
             for q in range(p+1, len(pairs)):
                 j,i = pairs[p]
@@ -120,10 +126,10 @@ class Operator_Bank:
     
     def GSD_Singlet(self):
         #Singles
-        for i in range(0, self.molecule.n_orbitals):
+        for i in range(int(self.ecp), self.molecule.n_orbitals):
             for a in range(i+1, self.molecule.n_orbitals):
-                one_elec = (1/np.sqrt(2))*openfermion.FermionOperator(((2*a,1),(2*i,0)))
-                one_elec += (1/np.sqrt(2))*openfermion.FermionOperator(((2*a+1,1),(2*i+1,0)))
+                one_elec = (1/np.sqrt(2))*openfermion.FermionOperator(((2*a-2*self.ecp,1),(2*i-2*self.ecp,0)))
+                one_elec += (1/np.sqrt(2))*openfermion.FermionOperator(((2*a+1-2*self.ecp,1),(2*i+1-2*self.ecp,0)))
                 one_elec -= openfermion.hermitian_conjugated(one_elec)
                 one_elec = openfermion.normal_ordered(one_elec)
                 norm = 0
@@ -131,13 +137,13 @@ class Operator_Bank:
                     norm += one_elec.terms[term]*one_elec.terms[term]
                 if one_elec.many_body_order()>0 and norm!=0:
                     self.SQ_Singles.append(one_elec/np.sqrt(norm))
-                    self.Singles.append([a,i])               
+                    self.Singles.append([a-self.ecp,i-self.ecp])               
      
         #Doubles
         pairs = []
-        for j in range(0, self.molecule.n_orbitals):
+        for j in range(int(self.ecp), self.molecule.n_orbitals):
             for i in range(j, self.molecule.n_orbitals):
-                pairs.append([i,j])
+                pairs.append([i-self.ecp,j-self.ecp])
         for pair in range(0, len(pairs)):
             for pair2 in range(pair+1, len(pairs)):
                 i, j = pairs[pair]
@@ -176,26 +182,26 @@ class Operator_Bank:
         #aa
         for i in self.aoccs:
             for a in self.anoccs:
-                one_elec = openfermion.FermionOperator(((a,1),(i,0)))-openfermion.FermionOperator(((i,1),(a,0)))
+                one_elec = openfermion.FermionOperator(((a-self.ecp*2,1),(i-self.ecp*2,0)))-openfermion.FermionOperator(((i-self.ecp*2,1),(a-self.ecp*2,0)))
                 self.SQ_Singles.append(one_elec)
-                self.Singles.append([a,i])
+                self.Singles.append([a-self.ecp*2,i-self.ecp*2])
 
         #bb
         for i in self.boccs:
             for a in self.bnoccs:
-                one_elec = openfermion.FermionOperator(((a,1),(i,0)))-openfermion.FermionOperator(((i,1),(a,0)))
+                one_elec = openfermion.FermionOperator(((a-self.ecp*2,1),(i-self.ecp*2,0)))-openfermion.FermionOperator(((i-self.ecp,1),(a-self.ecp,0)))
                 self.SQ_Singles.append(one_elec)
-                self.Singles.append([a,i])
+                self.Singles.append([a-self.ecp,i-self.ecp])
 
         #Doubles
         occs = []
         noccs = []
         for i in range(0, self.molecule.n_electrons):
             for j in range(i+1, self.molecule.n_electrons):
-                occs.append([i,j])
+                occs.append([i-self.ecp*2,j-self.ecp*2])
         for a in range(self.molecule.n_electrons, self.molecule.n_orbitals*2):
             for b in range(a+1, self.molecule.n_orbitals*2):
-                noccs.append([a,b])
+                noccs.append([a-self.ecp*2,b-self.ecp*2])
         for occ in occs:
             for nocc in noccs:
                 j, i = occ
@@ -207,10 +213,10 @@ class Operator_Bank:
 
     def SD_Singlet(self):
          #Singles
-         for i in range(0, int(self.molecule.n_electrons/2)):
+         for i in range(int(self.ecp), int(self.molecule.n_electrons/2)):
              for a in range(int(self.molecule.n_electrons/2), self.molecule.n_orbitals):
-                 one_elec = (1/np.sqrt(2))*openfermion.FermionOperator(((2*a,1),(2*i,0)))
-                 one_elec += (1/np.sqrt(2))*openfermion.FermionOperator(((2*a+1,1),(2*i+1,0)))
+                 one_elec = (1/np.sqrt(2))*openfermion.FermionOperator(((2*a-self.ecp*2,1),(2*i-self.ecp*2,0)))
+                 one_elec += (1/np.sqrt(2))*openfermion.FermionOperator(((2*a+1-self.ecp*2,1),(2*i+1-self.ecp*2,0)))
                  one_elec -= openfermion.hermitian_conjugated(one_elec)
                  one_elec = openfermion.normal_ordered(one_elec)
                  norm = 0
@@ -218,20 +224,20 @@ class Operator_Bank:
                      norm += one_elec.terms[term]*one_elec.terms[term]
                  if one_elec.many_body_order()>0 and norm!=0:
                      self.SQ_Singles.append(one_elec/np.sqrt(norm))
-                     self.Singles.append([a,i])               
+                     self.Singles.append([a-self.ecp,i-self.ecp])               
       
          #Doubles
          pairs = []
-         for j in range(0, int(self.molecule.n_electrons/2)):
+         for j in range(int(self.ecp), int(self.molecule.n_electrons/2)):
              for i in range(j, int(self.molecule.n_electrons/2)):
                  for b in range(int(self.molecule.n_electrons/2), self.molecule.n_orbitals):
                      for a in range(b, self.molecule.n_orbitals):
-                          two_elec = 2*openfermion.FermionOperator(((2*a,1),   (2*b,1),     (2*i,0),    (2*j,0)))
-                          two_elec += 2*openfermion.FermionOperator(((2*a+1,1),(2*b+1,1),   (2*i+1,0),  (2*j+1,0)))
-                          two_elec += openfermion.FermionOperator(((2*a+1,1),  (2*b,1),     (2*i+1,0),  (2*j,0)))
-                          two_elec += openfermion.FermionOperator(((2*a,1),    (2*b+1,1),   (2*i,0),    (2*j+1,0)))
-                          two_elec += openfermion.FermionOperator(((2*a,1),  (2*b+1,1),     (2*i+1,0),  (2*j,0)))
-                          two_elec += openfermion.FermionOperator(((2*a+1,1),    (2*b,1),   (2*i,0),    (2*j+1,0)))
+                          two_elec = 2*openfermion.FermionOperator(((2*a-self.ecp*2,1),   (2*b-self.ecp*2,1),     (2*i-self.ecp*2,0),    (2*j-self.ecp*2,0)))
+                          two_elec += 2*openfermion.FermionOperator(((2*a+1-self.ecp*2,1),(2*b+1-self.ecp*2,1),   (2*i+1-self.ecp*2,0),  (2*j+1-self.ecp*2,0)))
+                          two_elec += openfermion.FermionOperator(((2*a+1-self.ecp*2,1),  (2*b-self.ecp*2,1),     (2*i+1-self.ecp*2,0),  (2*j-self.ecp*2,0)))
+                          two_elec += openfermion.FermionOperator(((2*a-self.ecp*2,1),    (2*b+1-self.ecp*2,1),   (2*i-self.ecp*2,0),    (2*j+1-self.ecp*2,0)))
+                          two_elec += openfermion.FermionOperator(((2*a-self.ecp*2,1),  (2*b+1-self.ecp*2,1),     (2*i+1-self.ecp*2,0),  (2*j-self.ecp*2,0)))
+                          two_elec += openfermion.FermionOperator(((2*a+1-self.ecp*2,1),    (2*b-self.ecp*2,1),   (2*i-self.ecp*2,0),    (2*j+1-self.ecp*2,0)))
                           norm = 0
                           two_elec -= openfermion.hermitian_conjugated(two_elec)
                           two_elec = openfermion.normal_ordered(two_elec)
@@ -239,12 +245,12 @@ class Operator_Bank:
                               norm += two_elec.terms[term]*two_elec.terms[term]
                           if two_elec.many_body_order()>0 and norm!=0:
                               self.SQ_Doubles.append(two_elec/np.sqrt(norm))
-                              self.Doubles.append([a,b,i,j])               
+                              self.Doubles.append([a-self.ecp,b-self.ecp,i-self.ecp,j-self.ecp])               
                           
-                          two_elec = openfermion.FermionOperator(((2*a+1,1),(2*b,1),(2*i+1,0),(2*j,0)))
-                          two_elec += openfermion.FermionOperator(((2*a,1),(2*b+1,1),(2*i,0),(2*j+1,0)))
-                          two_elec -= openfermion.FermionOperator(((2*a,1),(2*b+1,1),(2*i+1,0),(2*j,0)))
-                          two_elec -= openfermion.FermionOperator(((2*a+1,1),(2*b,1),(2*i,0),(2*j+1,0)))
+                          two_elec = openfermion.FermionOperator(((2*a+1-2*self.ecp,1),(2*b-self.ecp*2,1),(2*i+1-self.ecp*2,0),(2*j-self.ecp*2,0)))
+                          two_elec += openfermion.FermionOperator(((2*a-self.ecp*2,1),(2*b+1-self.ecp*2,1),(2*i-self.ecp*2,0),(2*j+1-self.ecp*2,0)))
+                          two_elec -= openfermion.FermionOperator(((2*a-self.ecp*2,1),(2*b+1-self.ecp*2,1),(2*i+1-self.ecp*2,0),(2*j-self.ecp*2,0)))
+                          two_elec -= openfermion.FermionOperator(((2*a+1-self.ecp*2,1),(2*b-self.ecp*2,1),(2*i-self.ecp*2,0),(2*j+1-self.ecp*2,0)))
                           norm = 0
                           two_elec -= openfermion.hermitian_conjugated(two_elec)
                           two_elec = openfermion.normal_ordered(two_elec)
@@ -252,7 +258,7 @@ class Operator_Bank:
                               norm += two_elec.terms[term]*two_elec.terms[term]
                           if two_elec.many_body_order()>0 and norm!=0:
                               self.SQ_Doubles.append(two_elec/np.sqrt(norm))
-                              self.Doubles.append([a,b,i,j])
+                              self.Doubles.append([a-self.ecp,b-self.ecp,i-self.ecp,j-self.ecp])
 
 
 

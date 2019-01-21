@@ -8,9 +8,16 @@ import math
 
 class Operator_Bank:
     def __init__(self, molecule, **kwargs):
+         self.ecp = kwargs.get('ecp', 'False')
          #Associate a Hamiltonian with this system
          self.molecule = molecule
-         self.hamiltonian = molecule.get_molecular_hamiltonian()
+         if self.ecp == 'False':
+             self.hamiltonian = molecule.get_molecular_hamiltonian()
+         else:
+             core = list(range(0, int(self.ecp)))
+             valence = list(range(int(self.ecp), self.n_orbitals))
+             self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = core, active_indices = valence)
+        
          self.two_index_hamiltonian = self.hamiltonian.one_body_tensor
          self.four_index_hamiltonian = self.hamiltonian.two_body_tensor
          self.JW_hamiltonian = openfermion.transforms.get_sparse_operator(self.hamiltonian)         

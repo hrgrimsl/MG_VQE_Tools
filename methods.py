@@ -17,21 +17,21 @@ def Optimize(molecule, ops, logging, **kwargs):
     if algorithm == 'ADAPT':
         outcome = ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging)
     if algorithm == 'UCC':
-        outcome = UCC(molecule, ops, theta_tightness)
+        outcome = UCC(molecule, ops, theta_tightness, logging)
     if algorithm == 'RADAPT':
         outcome = RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed)
     if algorithm == 'LADAPT':
         outcome = LADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging)
 
     return outcome
-
+def Callback(optimization):
+    print(optimization)
 def VQE(molecule, parameters, ops, theta_tightness, logging):
     #Initialize parameters
     print('Performing optimization of parameters...')
-    optimization = scipy.optimize.minimize(Trotter_SPE, parameters, jac = Trotter_Gradient, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False})
+    optimization = scipy.optimize.minimize(Trotter_SPE, parameters, jac = Trotter_Gradient, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False}, callback = Callback)
     print(str(len(parameters))+' parameters optimized in '+str(optimization.nit)+' iterations!')
     print('Current energy: '+str(optimization.fun))
-    logging.info(str(optimization.fun))
     return optimization
 
 def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
@@ -64,12 +64,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
 
 
         #Comment this stuff out later
-        if abs(gradients[-1])<1e-1 and 1e-1 not in ansatz.milestones:
-            ansatz.milestones.append(1e-1)
-            logging.info('eps1 '+str(OptRes.x))
-        if abs(gradients[-1])<1e-2 and 1e-2 not in ansatz.milestones:
-            logging.info('eps2 '+str(OptRes.x))
-            ansatz.milestones.append(1e-2)
+
 
         if abs(gradients[-1])<ADAPT_tightness:
             if len(gradients) == 2:
@@ -209,6 +204,7 @@ def LADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
             print(string)
         print('\n')        
         energy = OptRes.fun
+        print(energy)
         current_ket = copy.copy(ops.HF_ket)
         for i in reversed(range(0, len(parameters))):
              current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 
