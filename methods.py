@@ -303,17 +303,17 @@ def Force(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         if len(parameters)>0:            
             gradient = np.hstack((np.zeros((len(parameters))),gradient))
         hinv = -np.linalg.pinv(hessian)
-        grad = (gradient[len(parameters):])
-        
+        #grad = (gradient[len(parameters):])
+        grad = gradient
         max = 0
         num = None
-        for i in range(0, len(grad)):
+        for i in range(len(parameters), len(gradient)):
+
             delta_e = 0
             for j in range(0, len(grad)):
                 delta_e-=.5*grad[i]*hinv[i][j]*grad[j]
-                 
             if abs(delta_e)>max:
-                num = i
+                num = i-len(parameters)
                 max = abs(delta_e)
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
@@ -321,10 +321,10 @@ def Force(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         parameters.insert(0, 0)
         print('\nIteration '+str(len(parameters))+'.\n')
         print('Next operation: {:10s}'.format(str(ops.Full_Ops[num])))
-        print('Next energy change approximately: {:10.14f}'.format(-max))
+        print('Predicted energy change: {:10.14f}'.format(-max))
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
-        print('Energy_change = {+:10.14}'.format(OptRes.fun-energy))
+        print('Energy change = {:+10.14}'.format(OptRes.fun-energy))
         energy = OptRes.fun
         scipy_hessians.append(np.linalg.pinv(OptRes.hess_inv))
 
