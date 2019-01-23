@@ -31,7 +31,7 @@ class Operator_Bank:
 
          #Construct reference ket
          self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(list(range(0, molecule.n_electrons-2*self.ecp)), molecule.n_qubits-2*int(self.ecp))).transpose()
-         print(self.HF_ket)
+
          #Parse kwargs
          self.include_pqrs = kwargs.get('include_pqrs', 'False')
          self.screen_commutators = kwargs.get('screen_commutators', 'False')

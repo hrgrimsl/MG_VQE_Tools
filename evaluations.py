@@ -1,6 +1,9 @@
 import scipy
 import copy
 import numpy as np
+import openfermioncirq
+import cirq
+
 
 def Trotter_SPE(parameters, ops):
     ket = copy.copy(ops.HF_ket)
@@ -45,4 +48,5 @@ def UCC_SPE(parameters, ops):
     ket = scipy.sparse.linalg.expm_multiply(gen, ket)
     energy = ket.transpose().dot(ops.JW_hamiltonian).dot(ket).toarray()[0][0].real
     return energy
-       
+
+
