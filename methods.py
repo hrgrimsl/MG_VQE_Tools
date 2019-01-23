@@ -301,19 +301,22 @@ def Force(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         hessian, gradient = Build_Hessian(ansatz, ops, molecule, parameters, scipy_hessians)
         hessian_norm = np.linalg.norm(hessian)
         if len(parameters)>0:            
-            gradient = np.hstack((np.zeros((len(parameters))),gradient))
+            gradient = np.hstack((gradient, np.zeros((len(parameters)))))
         hinv = -np.linalg.pinv(hessian)
-        #grad = (gradient[len(parameters):])
-        grad = gradient
+        grad = (gradient[:len(ops.Full_JW_Ops)])
+        #grad = gradient
         max = 0
         num = None
-        for i in range(len(parameters), len(gradient)):
-
+        for i in range(0, len(grad)):
             delta_e = 0
-            for j in range(0, len(grad)):
-                delta_e-=.5*grad[i]*hinv[i][j]*grad[j]
+            for j in range(0, len(gradient)):
+                delta_e-=.5*grad[i]*hinv[i][j]*gradient[j]
+                #delta_e-=.5*grad[i]*hinv[i][j]*grad[j]
+                if j>len(ops.Full_JW_Ops) and gradient[j]!=0:
+                    print(j)
+                    print(gradient[j])
             if abs(delta_e)>max:
-                num = i-len(parameters)
+                num = i
                 max = abs(delta_e)
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
