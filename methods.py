@@ -290,6 +290,8 @@ def CG_Hessian(gradient, ansatz, ops, molecule, parameters, N, a, HAbra, hbra, k
          
     
 def Force(molecule, ops, theta_tightness, ADAPT_tightness, logging):
+    energy = molecule.hf_energy 
+    OptRes = scipy.optimize.OptimizeResult(x=(), fun = molecule.hf_energy, nit = 0)
     scipy_hessians = [np.array([])]    
     ansatz = Ansatz_Operations(ops)
     parameters = []
@@ -322,6 +324,8 @@ def Force(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         print('Next energy change approximately: {:10.14f}'.format(-max))
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
+        print('Energy_change = {+:10.14}'.format(OptRes.fun-energy))
+        energy = OptRes.fun
         scipy_hessians.append(np.linalg.pinv(OptRes.hess_inv))
 
 
