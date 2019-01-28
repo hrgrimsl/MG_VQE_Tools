@@ -49,4 +49,73 @@ def UCC_SPE(parameters, ops):
     energy = ket.transpose().dot(ops.JW_hamiltonian).dot(ket).toarray()[0][0].real
     return energy
 
+def Predict_dE(molecule, ops, theta_tightness, ADAPT_tightness, logging, ansatz, parameters, energy, scipy_hessians):
+    hessian, gradient = Build_Hessian(ansatz, ops, molecule, parameters, scipy_hessians)
+    hessian_norm = np.linalg.norm(hessian)
+    if len(parameters)>0:    
+        gradient = np.hstack((gradient, np.zeros((len(parameters)))))
+    hinv = -np.linalg.pinv(hessian)
+    grad = (gradient[:len(ops.Full_JW_Ops)])
+    dx = -hinv.dot(gradient.transpose())
+    dE = .5*gradient.dot(dx)
+    #grad = gradient
+    if dE>0:
+        dE = -dE 
+    return dE
+
+def Build_Hessian(ansatz, ops, molecule, parameters, scipy_hessians):
+    cur_ket = ops.HF_ket
+    for i in reversed(range(0, len(parameters))):
+        cur_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], cur_ket)
+    hessian = {}
+    #A, B in pool
+    lg = np.zeros((len(ops.Full_JW_Ops),len(ops.Full_JW_Ops)))
+    for a in range(0, len(ops.Full_JW_Ops)):
+        for b in range(a, len(ops.Full_JW_Ops)):
+            comm = ops.JW_hamiltonian.dot(ops.Full_JW_Ops[a])
+            comm-=ops.Full_JW_Ops[a].dot(ops.JW_hamiltonian)
+            lg[a][b] = (2*cur_ket.transpose().conj().dot(comm).dot(ops.Full_JW_Ops[b]).dot(cur_ket).toarray()[0][0].real)
+            lg[b][a] = lg[b][a]
+    hessian['lg'] = np.array(lg)
+    #A in pool, B not
+    gradient = []
+    for a in range(0, len(ops.Full_JW_Ops)):
+        HAbra = ops.JW_hamiltonian.dot(ops.Full_JW_Ops[a])
+        HAbra-= ops.Full_JW_Ops[a].dot(ops.JW_hamiltonian)
+        HAbra = (cur_ket).transpose().conj().dot(HAbra)
+        N = 0
+        cg = np.zeros((len(ops.Full_JW_Ops),len(ansatz.Full_JW_Ops)))
+        hbra = ops.JW_hamiltonian.dot(ops.Full_JW_Ops[a]).dot(cur_ket).transpose().conj()
+        cg, gradient = CG_Hessian(gradient, ansatz, ops, molecule, parameters, N, a, HAbra, hbra, cur_ket, copy.copy(cur_ket), cg)
+    hessian['cg'] = cg
+    #A, B in pool
+    hessian['ce'] = scipy_hessians[-1]
+    hessian['le'] = np.zeros((cg.shape[-1],cg.shape[-2]))
+    for i in range(0, cg.shape[0]):
+        for j in range(0, cg.shape[1]):
+            hessian['le'][j][i]=cg[i][j]
+    if len(parameters)>0:
+        law = np.vstack((hessian['lg'], hessian['le']))
+        chaos = np.vstack((hessian['cg'],hessian['ce']))
+        hessian = np.hstack((law,chaos))
+    else:
+        hessian = hessian['lg']
+    return hessian, np.array(gradient)
+
+def CG_Hessian(gradient, ansatz, ops, molecule, parameters, N, a, HAbra, hbra, ket, cur_ket, cg):
+    if N!=0:
+        hbraket = scipy.sparse.hstack((HAbra.transpose().conj(), ket))
+        hbraket = scipy.sparse.hstack((hbraket, hbra.transpose()))
+        hbraket = scipy.sparse.csc_matrix(scipy.sparse.linalg.expm_multiply(-ansatz.Full_JW_Ops[N-1]*parameters[N-1], hbraket))
+        HAbra = hbraket.transpose()[0,:].conj()
+        ket = hbraket.transpose()[1,:].transpose()
+        hbra = hbraket.transpose()[2,:].conj()
+    if len(ansatz.Full_JW_Ops)>0:
+        cg[a][N] = 2*HAbra.dot(ansatz.Full_JW_Ops[N]).dot(ket).toarray()[0][0].real
+    if N == 0:
+        gradient.append(2*hbra.dot(ket).toarray()[0][0].real)
+    if N<len(parameters)-1:
+        N+=1
+        cg, gradient = CG_Hessian(gradient, ansatz, ops, molecule, parameters, N, a, HAbra, hbra,  ket, cur_ket, cg)
+    return cg, gradient
 
