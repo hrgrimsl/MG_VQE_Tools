@@ -27,7 +27,6 @@ def Get_Molecule(input_file):
             psi_file = line.split()[1]
         elif re.search('loc', line):
             loc  = line.split()[1]
-
         elif re.search('nfd', line):
             nfd = line.split()[1]
     molecule = openfermion.hamiltonians.MolecularData(geometry, basis, multiplicity, charge)
