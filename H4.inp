@@ -1,19 +1,19 @@
 basis sto-3g
 multiplicity 1
 psi_file bob
+charge 0
 
 atom H 0 0 0
-atom H 0 0 1.5
+atom H 0 0 1
+atom H 0 0 2
 atom H 0 0 3
-atom H 0 0 4.5
+loc True
 
-op_kwarg include_pqrs False
+op_kwarg include_pqrs True
 op_kwarg screen_commutators False
-op_kwarg screen_integrals False
 op_kwarg spin_adapt True
 
-
 method_kwarg algorithm ADAPT
-method_kwarg theta_tightness 1e-7
-method_kwarg ADAPT_tightness 1e-3
-method_kwarg RADAPT_seed 1
+method_kwarg theta_tightness 1e-13
+method_kwarg ADAPT_tightness 1e-6
+

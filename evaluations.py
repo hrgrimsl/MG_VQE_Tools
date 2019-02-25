@@ -21,7 +21,7 @@ def SPE_No_H(parameters, ops):
     ket = copy.copy(ops.HF_ket)
     for i in reversed(range(0, len(parameters))):
         ket = scipy.sparse.linalg.expm_multiply(ops.Full_JW_Ops[i]*parameters[i], ket)
-    return ket.transpose().conj().dot(ket).toarray()[0][0].real
+    return ket.transpose().conj().dot(ops.JW_hamiltonian).dot(ket).toarray()[0][0].real
 
 def Numerical_Hessian(ansatz, ops, molecule, parameters, scipy_hessians):
     Hessian = []
@@ -95,23 +95,24 @@ def Predict_dE(molecule, ops, theta_tightness, ADAPT_tightness, logging, ansatz,
     hessian_norm = np.linalg.norm(hessian)
     if len(parameters)>0 and frozen_ansatz == False:    
         gradient = np.hstack((gradient, np.zeros((len(parameters)))))
-    print(frozen_ansatz)
     grad = (gradient[:len(ops.Full_JW_Ops)])
     gradient = list(gradient)
     grad2 = []
     for i in gradient:
         grad2.append([i])
     gradient = np.array(grad2)
-    u, s, v = np.linalg.svd(hessian, full_matrices=True, compute_uv=True) 
+    u, s, v = np.linalg.svd(hessian, full_matrices=True, compute_uv=True)
+    print(s) 
+    S = []
     for i in list(s):
-        S = []
-        if i>=Singular_threshold:
+        if abs(i)>=Singular_threshold:
             S.append(i)
     s2 = np.diag(np.array(S))
     u2 = u[:,:len(s2)]
     v2 = v[:len(s2),:]
     hessian = u2.dot(s2).dot(v2)
     sinv = []
+
     for j in range(0, len(s2[-1])):
         sinv.append(1/S[j])
     sinv = np.diag(np.array(sinv))
@@ -120,7 +121,7 @@ def Predict_dE(molecule, ops, theta_tightness, ADAPT_tightness, logging, ansatz,
     dE = gradient.conj().transpose().dot(dx)+.5*dx.conj().transpose().dot(hessian).dot(dx)
     dE = float(dE)
     print('dE = '+str(dE))
-    logging.info(str(energy+dE))
+    #logging.info(str(energy+dE))
     #grad = gradient
     if dE>0:
         dE = -dE 
@@ -167,8 +168,7 @@ def Build_Hessian(ansatz, ops, molecule, parameters, scipy_hessians):
         cg = np.zeros((len(ops.Full_JW_Ops),len(ansatz.Full_JW_Ops)))
         hbra = ops.JW_hamiltonian.dot(ops.Full_JW_Ops[a]).dot(cur_ket).transpose().conj()
         cg, gradient = CG_Hessian(gradient, ansatz, ops, molecule, parameters, N, a, HAbra, hbra, cur_ket, copy.copy(cur_ket), cg)
-    hessian['cg'] = cg
-    
+    hessian['cg'] = cg    
     hessian['ce'] = scipy_hessians[-1]
     #A, B, not in pool
     hessian['le'] = np.zeros((cg.shape[-1],cg.shape[-2]))

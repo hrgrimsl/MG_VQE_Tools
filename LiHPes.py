@@ -40,7 +40,7 @@ for i in range(5, 25):
     write.write('op_kwarg include_pqrs True \n')
     write.write('op_kwarg screen_commutators False \n')
     write.write('op_kwarg spin_adapt True \n')
-    write.write('method_kwarg algorithm ADAPT_End \n')
+    write.write('method_kwarg algorithm ADAPT_PT2 \n')
     write.write('method_kwarg theta_tightness 1e-7 \n')
     write.write('method_kwarg ADAPT_tightness 1e-2 \n')
     write.write('method_kwarg RADAPT_Seed 0\n')
