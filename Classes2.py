@@ -412,6 +412,22 @@ class Ansatz_Operations:
         self.molecule = ops.molecule
         self.JW_hamiltonian = ops.JW_hamiltonian
         self.milestones = []
+        self.indices = []
+        self.parameters = []
     def __str__(self):
         return(str(self.Full_Ops))
+    def dump(self, filename):
+        dst = open(filename, 'w')
+        for i in range(0, len(self.indices)):
+            dst.write(str(self.indices[i])+' '+str(self.parameters[i])+'\n')
+    def read(self, filename, ops):
+        src = open(filename, 'r')
+        for i in src.readlines():
+            num = int(i.split()[0])
+            param = float(i.split()[1])
+            self.Full_JW_Ops.append(ops.Full_JW_Ops[num])
+            self.Full_Ops.append(ops.Full_Ops[num])
+            self.indices.append(num)
+            self.parameters.append(param)
+
 

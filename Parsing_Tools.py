@@ -1,4 +1,5 @@
 import re
+import os
 import openfermion
 import openfermionpsi4
 
@@ -7,6 +8,7 @@ def Get_Molecule(input_file):
     geometry = []
     psi_file = 'temp'
     loc = False
+    swap = []
     for line in in_file:
         if re.search('basis', line):
             basis = line.split()[1]
@@ -29,9 +31,13 @@ def Get_Molecule(input_file):
             loc  = line.split()[1]
         elif re.search('nfd', line):
             nfd = line.split()[1]
+        elif re.search('swap', line):
+            swap.append([int(line.split()[1]),int(line.split()[2])])
+
     molecule = openfermion.hamiltonians.MolecularData(geometry, basis, multiplicity, charge)
     molecule.filename = psi_file
-    molecule = openfermionpsi4.run_psi4(molecule, run_scf = 1, run_mp2 = 1, run_ccsd = 1, run_cisd = 1, run_fci = 1, localize = loc)
+
+    molecule = openfermionpsi4.run_psi4(molecule, run_scf = 1, run_mp2 = 1, run_ccsd = 1, run_cisd = 1, run_fci = 1, localize = loc, swaps = swap)
     return molecule
 
 def Get_Op_Kwargs(input_file):

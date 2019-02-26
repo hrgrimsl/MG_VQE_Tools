@@ -9,6 +9,8 @@ def Optimize(molecule, ops, logging, **kwargs):
     theta_tightness = float(kwargs.get('theta_tightness', '1e-5'))
     ADAPT_tightness = float(kwargs.get('ADAPT_tightness', '1e-5'))
     Singular_threshold = float(kwargs.get('Singular_threshold', '1e-5'))
+    rfile = (kwargs.get('read', None))
+    wfile = (kwargs.get('write', 'ansatz.txt'))
     seed = float(kwargs.get('RADAPT_seed', 0))
     if algorithm == 'VQE':
         parameters = []
@@ -16,7 +18,7 @@ def Optimize(molecule, ops, logging, **kwargs):
             parameters.append(0)
         outcome = VQE(molecule, parameters, ops, theta_tightness, logging)
     if algorithm == 'ADAPT':
-        outcome = ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging)
+        outcome = ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
     if algorithm == 'ADAPT_End':
         outcome = ADAPT_End(molecule, ops, theta_tightness, ADAPT_tightness, logging)
     if algorithm == 'ADAPT_All':
@@ -59,11 +61,26 @@ def VQE_No_H(molecule, parameters, ops, theta_tightness, logging):
     print('Current energy: '+str(optimization.fun))
     return optimization
 
-def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
+def Expand_Pool(molecule, ops, vector, ansatz):
+    #Analyze gradients
+    #x = number of largest gradients to pair
+    x = 3
+    bigops = np.array(vector).argsort()[-x:][::-1]
+    for i in list(bigops):
+        for j in list(bigops):
+            if j<=i:
+                continue
+            ops.Full_Ops.append(ops.Full_Ops[i]+ops.Full_Ops[j])
+            ops.Full_JW_Ops.append(ops.Full_JW_Ops[i])
+    return ops, vector
+
+def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
     energy = molecule.hf_energy
     ansatz = Ansatz_Operations(ops)
+    if rfile!=None:
+        ansatz.read(str(rfile), ops)
     current_ket = copy.copy(ops.HF_ket)
-    parameters = []
+    parameters = ansatz.parameters
     scipy_hessians = [np.array([])]    
     gradients = [None]
     i_iter = 0
@@ -87,6 +104,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         print('Next operation: {:10s}'.format(str(ops.Full_Ops[num])))
         print('Next gradient: {:+10.14f}'.format(grad))
         gradients.append(scipy.linalg.norm(vector))
+        #ops, vector = Expand_Pool(molecule, vector)
         print('Norm of all gradients: {:+10.14f}'.format(gradients[-1]))
         #Comment this stuff out later
         try:
@@ -99,8 +117,12 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
             continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
+        ansatz.indices.insert(0, num)
+
         parameters = list(parameters)
         parameters.insert(0, 0)
+        ansatz.parameters = list(parameters)
+        ansatz.dump(str(wfile))
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
         print('Newest full ansatz:\n')
@@ -117,7 +139,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         scipy_hessians.append(np.linalg.pinv(OptRes.hess_inv))
         current_ket = copy.copy(ops.HF_ket)
         for i in reversed(range(0, len(parameters))):
-             current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 
+            current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 
         i_iter += 1
     return OptRes
 

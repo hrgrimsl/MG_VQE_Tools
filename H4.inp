@@ -7,7 +7,7 @@ atom H 0 0 0
 atom H 0 0 1
 atom H 0 0 2
 atom H 0 0 3
-loc True
+loc False
 
 op_kwarg include_pqrs True
 op_kwarg screen_commutators False

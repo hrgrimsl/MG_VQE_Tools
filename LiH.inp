@@ -4,14 +4,18 @@ psi_file bob
 charge 0
 
 atom H 0 0 0
-atom H 0 0 2.39
+atom Li 0 0 2.39
 loc False
+
 
 op_kwarg include_pqrs True
 op_kwarg screen_commutators False
 op_kwarg spin_adapt True
 
-method_kwarg algorithm ADAPT_PT2
+
+method_kwarg read ansatz
+method_kwarg write ansatz
+method_kwarg algorithm ADAPT
 method_kwarg theta_tightness 1e-13
 method_kwarg ADAPT_tightness 1e-6
 method_kwarg Singular_threshold 1e-10
