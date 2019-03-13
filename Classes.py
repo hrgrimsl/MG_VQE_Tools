@@ -11,13 +11,21 @@ class Operator_Bank:
          self.ecp = kwargs.get('ecp', 'False')
          #Associate a Hamiltonian with this system
          self.molecule = molecule
+         print(self.ecp)
          if self.ecp == 'False':
              self.hamiltonian = molecule.get_molecular_hamiltonian()
          else:
              core = list(range(0, int(self.ecp)))
              valence = list(range(int(self.ecp), self.n_orbitals))
              self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = core, active_indices = valence)
-        
+             
+             wfile = open('CASCI.out', 'a')
+             print('Hi')
+             eigs = ((np.linalg.eigh(self.hamiltonian))[0])
+             print(eigs)
+             wfile.write(str(sorted(eigs)[0])+'\n')
+             exit()
+
          self.two_index_hamiltonian = self.hamiltonian.one_body_tensor
          self.four_index_hamiltonian = self.hamiltonian.two_body_tensor
          self.JW_hamiltonian = openfermion.transforms.get_sparse_operator(self.hamiltonian)         

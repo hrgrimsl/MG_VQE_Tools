@@ -39,6 +39,13 @@ def Optimize(molecule, ops, logging, **kwargs):
         outcome = HOPS(molecule, ops, theta_tightness, ADAPT_tightness, logging)
     if algorithm == 'VarStep':
         outcome = VarStep(molecule, ops, theta_tightness, ADAPT_tightness, logging)
+    if algorithm == 'FCI':
+        wfile = open('CASCI.out', 'a')
+        h = ops.JW_hamiltonian
+        e = sorted(scipy.sparse.linalg.eigsh(h, k = 120)[0])[0].real
+        wfile.write(str(e)+'\n')
+        print(str(e))
+        exit()
     return outcome
 
        
@@ -65,13 +72,16 @@ def Expand_Pool(molecule, ops, vector, ansatz):
     #Analyze gradients
     #x = number of largest gradients to pair
     x = 3
-    bigops = np.array(vector).argsort()[-x:][::-1]
+    bigops = np.array(vector).argsort()[0:x][::-1]    
     for i in list(bigops):
         for j in list(bigops):
             if j<=i:
                 continue
-            ops.Full_Ops.append(ops.Full_Ops[i]+ops.Full_Ops[j])
-            ops.Full_JW_Ops.append(ops.Full_JW_Ops[i])
+            new_op = (ops.Full_JW_Ops[i].dot(ops.Full_JW_Ops[j])-ops.Full_JW_Ops[j].dot(ops.Full_JW_Ops[i]))
+            if scipy.sparse.linalg.norm(new_op)>=1e-8:
+                ops.Full_JW_Ops.append(new_op)
+                ops.Full_Ops.append(ops.Full_Ops[i]+ops.Full_Ops[j])
+                print(ops.Full_Ops[-1])
     return ops, vector
 
 def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
@@ -91,24 +101,27 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         vector = []
         for i in range(0, len(ops.Full_JW_Ops)):
             comm = 2*hbra.dot(ops.Full_JW_Ops[i]).dot(current_ket).toarray()[0][0].real
-            vector.append(comm) 
+            vector.append(-abs(comm)) 
             if abs(comm)>abs(grad):
                 grad = comm
                 num = i 
         print('\nIteration '+str(len(parameters))+'.\n')
+        '''
         print('Significant gradients:\n')
         for i in range(0, len(vector)):
             if abs(vector[i])>ADAPT_tightness:
                 print('{:+10.14f}'.format(vector[i])+' {:10s}'.format(str(ops.Full_Ops[i])))
         print('\n')
+        '''
         print('Next operation: {:10s}'.format(str(ops.Full_Ops[num])))
         print('Next gradient: {:+10.14f}'.format(grad))
         gradients.append(scipy.linalg.norm(vector))
-        #ops, vector = Expand_Pool(molecule, vector)
+        #ops, vector = Expand_Pool(molecule, ops, vector, ansatz)
         print('Norm of all gradients: {:+10.14f}'.format(gradients[-1]))
+
         #Comment this stuff out later
         try:
-            logging.info(str(energy)+' '+str(gradients[-1]))
+            logging.info(str(energy))
         except:
             pass
         if abs(gradients[-1])<ADAPT_tightness:
@@ -125,6 +138,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         ansatz.dump(str(wfile))
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
+        '''
         print('Newest full ansatz:\n')
         for term in range(0, len(ansatz.Full_Ops)):
             string = '%+14.10f'%float(parameters[term])+' '
@@ -134,12 +148,23 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
                 else:
                     string+="%3i" %int(ansatz.Full_Ops[term][subterm])
             print(string)
-        print('\n')        
+        print('\n')   
+        '''     
         energy = OptRes.fun
+        
         scipy_hessians.append(np.linalg.pinv(OptRes.hess_inv))
         current_ket = copy.copy(ops.HF_ket)
         for i in reversed(range(0, len(parameters))):
             current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 
+        try:
+            S2 = current_ket.transpose().conj().dot(ops.S2.dot(current_ket)).toarray()[0][0].real
+        except:
+            pass
+        print('Energy: {:+10.14f}'.format(energy))
+        try:
+            print('S^2: {:+10.14f}'.format(S2))
+        except:
+            pass
         i_iter += 1
     return OptRes
 

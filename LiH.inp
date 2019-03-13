@@ -1,6 +1,6 @@
 basis sto-3g
-multiplicity 1
-psi_file bob
+multiplicity 3
+psi_file boberto
 charge 0
 
 atom H 0 0 0
@@ -13,7 +13,7 @@ op_kwarg screen_commutators False
 op_kwarg spin_adapt True
 
 
-method_kwarg read ansatz
+
 method_kwarg write ansatz
 method_kwarg algorithm ADAPT
 method_kwarg theta_tightness 1e-13

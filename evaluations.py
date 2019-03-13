@@ -15,6 +15,7 @@ def SPE(parameters, ops):
     for i in reversed(range(0, len(parameters))):
         generator+=ops.Full_JW_Ops[i]*parameters[i]
     ket = scipy.sparse.linalg.expm_multiply(generator, ops.HF_ket)
+
     return ket.transpose().dot(ops.JW_hamiltonian).dot(ket).toarray()[0][0].real
 
 def SPE_No_H(parameters, ops):

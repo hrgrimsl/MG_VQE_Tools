@@ -34,15 +34,21 @@ logging.info('Basis: '+str(molecule.basis))
 logging.info('Multiplicity: '+str(molecule.multiplicity))
 
 logging.info('HF = '+str(molecule.hf_energy))
-logging.info('CCSD = '+str(molecule.ccsd_energy))
-logging.info('CISD = '+str(molecule.cisd_energy))
-logging.info('FCI = '+str(molecule.fci_energy))
+
+
+
 
 #Obtain some useful global data
-HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(list(range(0,molecule.n_electrons)), molecule.n_qubits)).transpose()
+
 print('Constructing operator bank...')
 start = timer()
 ops = Operator_Bank(molecule, **Get_Op_Kwargs(args.input))
+h = (ops.JW_hamiltonian)
+e = (scipy.sparse.linalg.eigs(h, k = 1000, v0 = ops.HF_ket.toarray()))[0]
+print(e)
+molecule.fci = e 
+ops.molecule.fci = e
+logging.info('CASCI = '+str(molecule.fci_energy))
 end = timer()
 print('Operators constructed in '+str(end-start)+' seconds!')
 print(str(len(ops.Full_Ops))+' operations!')
@@ -51,7 +57,6 @@ outcome = Optimize(molecule, ops, logging, **Get_Method_Kwargs(args.input))
 end = timer()
 
 #Log results
-logging.info('Correlation energy = '+str(molecule.fci_energy-molecule.hf_energy))
 logging.info('Optimized energy = '+str(outcome.fun))
 logging.info('Error = '+str(outcome.fun-molecule.fci_energy))
 logging.info('Iterations = '+str(outcome.nit))

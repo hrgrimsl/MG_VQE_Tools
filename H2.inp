@@ -11,7 +11,7 @@ op_kwarg include_pqrs False
 op_kwarg screen_commutators False
 op_kwarg spin_adapt True
 
-method_kwarg algorithm ADAPT
+method_kwarg algorithm FCI
 method_kwarg theta_tightness 1e-11 
 method_kwarg STAG_Tightness 1e-13
 
