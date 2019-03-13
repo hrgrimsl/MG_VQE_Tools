@@ -45,9 +45,8 @@ start = timer()
 ops = Operator_Bank(molecule, **Get_Op_Kwargs(args.input))
 h = (ops.JW_hamiltonian)
 e = (scipy.sparse.linalg.eigs(h, v0 = ops.HF_ket.toarray()))[0]
-print(e)
-molecule.fci = e 
-ops.molecule.fci = e
+molecule.fci = e[0].real
+ops.molecule.fci = e[0].real
 logging.info('CASCI = '+str(molecule.fci_energy))
 end = timer()
 print('Operators constructed in '+str(end-start)+' seconds!')
