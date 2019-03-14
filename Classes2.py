@@ -86,7 +86,25 @@ def Make_S2(n_orb):
 
 class Operator_Bank:
     def __init__(self, molecule, **kwargs):
-         self.ecp = (kwargs.get('ecp', 'False'))
+
+         if molecule.n_qubits>molecule.n_electrons:
+             molecule.n_orbitals = int(math.ceil(molecule.n_orbitals))
+         self.active = (kwargs.get('as', 'False'))
+         if self.active != 'False':
+         
+             self.ecp = ''
+             self.active.replace('(','')
+             
+             self.active = self.active.split(',')
+             for i in range(0, len(self.active)):
+                 self.active[i]=int(self.active[i])
+             for i in range(0, molecule.n_orbitals):
+                 if i not in self.active:
+                     self.ecp+=str(i)+','
+             self.ecp = self.ecp[:-1]
+            
+         else:
+             self.ecp = (kwargs.get('ecp', 'False'))
          self.skips = (kwargs.get('skips', 'False'))
          if self.skips == 'False':
              self.skips = []
@@ -98,30 +116,38 @@ class Operator_Bank:
          #Associate a Hamiltonian with this system
          self.molecule = molecule
          if self.ecp == 'False':
-             self.S2 = Make_S2(molecule.n_orbitals) 
+             #self.S2 = Make_S2(molecule.n_orbitals) 
              self.hamiltonian = molecule.get_molecular_hamiltonian()
              self.ecp = 0
          else:
              self.ecp.replace('(','')
              self.ecp = self.ecp.split(',')
+
              for i in range(0, len(self.ecp)):
                  self.ecp[i]=int(self.ecp[i])
+             coreoccs = []
              core = []
              for i in self.ecp:
-                 if i<molecule.n_electrons*2:
-                     core.append(i) 
+                 if i*2<molecule.n_electrons:
+                     coreoccs.append(i)
+                 core.append(i) 
+
              valence = []
              for i in range(0, self.molecule.n_orbitals):
                  if i not in core:
                      valence.append(i)
-             molecule.n_orbitals -= int(len(core))
-             molecule.n_qubits -= int(len(core)*2)
-             molecule.n_electrons -= int(len(core)*2)
 
-             self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = core, active_indices = valence)
+
+            
+             molecule.n_orbitals -= int(len(core))
+             molecule.n_qubits =2*molecule.n_orbitals
+             molecule.n_electrons -= int(len(coreoccs)*2)
+
+             self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = coreoccs, active_indices = valence)
              #self.S2 = Make_S2(molecule.n_orbitals) 
 
-          
+         print(valence)
+         print(core) 
          self.ecp = 0
          
          self.two_index_hamiltonian = self.hamiltonian.one_body_tensor
@@ -139,10 +165,12 @@ class Operator_Bank:
          #Construct reference ket
          #Obtain some useful global data
          occupation = []
-         for i in (list(range(0,molecule.n_electrons+len(self.skips)))):
-         
+
+         for i in (list(range(0,molecule.n_electrons+len(self.skips)))): 
              if i not in self.skips:
                  occupation.append(i)
+         print(molecule.n_qubits-2*int(self.ecp))
+         
          self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(occupation, molecule.n_qubits-2*int(self.ecp))).transpose()
 
          #Parse kwargs
@@ -165,7 +193,7 @@ class Operator_Bank:
              else:
                  if self.molecule.multiplicity == 1:
                      self.GSD_Singlet()
-                 elif self.molecule.multiplicity == 3:
+                 else:
                      self.GSD_Triplet()
          else:
              if self.spin_adapt == 'False':

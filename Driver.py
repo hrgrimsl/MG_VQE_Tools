@@ -44,7 +44,7 @@ print('Constructing operator bank...')
 start = timer()
 ops = Operator_Bank(molecule, **Get_Op_Kwargs(args.input))
 h = (ops.JW_hamiltonian)
-e = (scipy.sparse.linalg.eigs(h, k = 6, v0 = ops.HF_ket.toarray()))[0]
+e = (scipy.sparse.linalg.eigs(h, k=1,v0 = ops.HF_ket.toarray()))[0]
 molecule.fci_energy = e[0].real
 ops.molecule.fci_energy = e[0].real
 
