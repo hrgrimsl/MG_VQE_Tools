@@ -142,12 +142,14 @@ class Operator_Bank:
              molecule.n_orbitals -= int(len(core))
              molecule.n_qubits =2*molecule.n_orbitals
              molecule.n_electrons -= int(len(coreoccs)*2)
-
+             print('Occupied spin-orbitals')
+             print(coreoccs)
+             print('Active orbitals')
+             print(valence)
              self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = coreoccs, active_indices = valence)
              #self.S2 = Make_S2(molecule.n_orbitals) 
 
-         print(valence)
-         print(core) 
+
          self.ecp = 0
          
          self.two_index_hamiltonian = self.hamiltonian.one_body_tensor
@@ -169,7 +171,7 @@ class Operator_Bank:
          for i in (list(range(0,molecule.n_electrons+len(self.skips)))): 
              if i not in self.skips:
                  occupation.append(i)
-         print(molecule.n_qubits-2*int(self.ecp))
+
          
          self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(occupation, molecule.n_qubits-2*int(self.ecp))).transpose()
 
@@ -186,7 +188,7 @@ class Operator_Bank:
          self.Doubles = []
          self.Full_JW_Ops = []
 
-         #Get unfiltered list
+         #Get https://mail.google.com/mail/u/0/#inboxunfiltered list
          if self.include_pqrs == 'True':
              if self.spin_adapt == 'False':
                  self.PQRS()
