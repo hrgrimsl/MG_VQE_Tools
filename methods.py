@@ -85,7 +85,7 @@ def Expand_Pool(molecule, ops, vector, ansatz):
     return ops, vector
 
 def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
-    energy = molecule.hf_energy
+    energy = ops.HF_ket.transpose().conj().dot(ops.JW_hamiltonian).dot(ops.HF_ket).toarray()[0][0].real
     ansatz = Ansatz_Operations(ops)
     if rfile!=None:
         ansatz.read(str(rfile), ops)
@@ -113,8 +113,11 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
                 print('{:+10.14f}'.format(vector[i])+' {:10s}'.format(str(ops.Full_Ops[i])))
         print('\n')
         '''
-        print('Next operation: {:10s}'.format(str(ops.Full_Ops[num])))
-        print('Next gradient: {:+10.14f}'.format(grad))
+        try:
+            print('Next operation: {:10s}'.format(str(ops.Full_Ops[num])))
+            print('Next gradient: {:+10.14f}'.format(grad))
+        except:
+            pass
         gradients.append(scipy.linalg.norm(vector))
         #ops, vector = Expand_Pool(molecule, ops, vector, ansatz)
         print('Norm of all gradients: {:+10.14f}'.format(gradients[-1]))
@@ -398,8 +401,10 @@ def ADAPT_End(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         #Comment this stuff out later
         try:
             logging.info(energy)
+            logging.info(str(current_ket))
         except:
             pass
+            logging.info(str(ops.HF_ket))
         if abs(gradients[-1])<ADAPT_tightness:
             if len(gradients) == 2:
                 OptRes = scipy.optimize.OptimizeResult(x=(), fun = molecule.hf_energy, nit = 0)

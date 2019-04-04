@@ -37,10 +37,14 @@ def Get_Molecule(input_file):
 
 
     molecule = openfermion.hamiltonians.MolecularData(geometry, basis, multiplicity, charge)
+
     molecule.filename = psi_file
+
     try:
         molecule.load()
+        print('Loading existing molecule.')
     except:  
+        print('Computing new molecule.')
         molecule = openfermionpsi4.run_psi4(molecule, run_scf = 1, run_mp2 = 0, run_ccsd = 0, run_cisd = 0, run_fci = 0, localize = loc)
 
     return molecule

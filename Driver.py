@@ -44,13 +44,22 @@ print('Constructing operator bank...')
 start = timer()
 ops = Operator_Bank(molecule, **Get_Op_Kwargs(args.input))
 h = (ops.JW_hamiltonian)
-e = (scipy.sparse.linalg.eigs(h, k=1,v0 = ops.HF_ket.toarray()))[0]
-molecule.fci_energy = e[0].real
-ops.molecule.fci_energy = e[0].real
+if h.shape[0]<128:
+    e = np.linalg.eigh(h.toarray())[0]
+else:
+    e,v = (scipy.sparse.linalg.eigsh(h, k = 1, v0 = ops.HF_ket.toarray()))
+x = np.argsort(np.array(e))
+molecule.fci_energy = e[x[0]].real
+try:
+    v1 = v[x[0]]
+    print(scipy.sparse.csc_matrix(v))
+except:
+    pass
+print('CI energy for defined space'.ljust(50)+'{}'.format(molecule.fci_energy))
 
 logging.info('CASCI = '+str(molecule.fci_energy))
 end = timer()
-print('Operators constructed in '+str(end-start)+' seconds!')
+print('Operators constructed in '.ljust(50)+str(end-start)+' seconds!')
 print(str(len(ops.Full_Ops))+' operations!')
 #Run optimization procedure
 outcome = Optimize(molecule, ops, logging, **Get_Method_Kwargs(args.input))

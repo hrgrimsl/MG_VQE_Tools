@@ -1,19 +1,22 @@
 basis sto-3g
 multiplicity 3
 psi_file blahblah
-charge 0
+charge 1
 
 
 atom H 0 0 0.5
 atom H 0 0 1
 atom H 0 0 1.5
-atom H 0 0 2
+
 loc False
 
 op_kwarg include_pqrs True
-op_kwarg screen_commutators False
 op_kwarg spin_adapt True
-op_kwarg skips 3
+
+
+op_kwarg active 1,2,3
+op_kwarg occs False
+op_kwarg soccs 1,2
 
 method_kwarg algorithm ADAPT
 method_kwarg theta_tightness 1e-13

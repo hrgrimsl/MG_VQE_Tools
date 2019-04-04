@@ -86,72 +86,63 @@ def Make_S2(n_orb):
 
 class Operator_Bank:
     def __init__(self, molecule, **kwargs):
-
-         if molecule.n_qubits>molecule.n_electrons:
-             molecule.n_orbitals = int(math.ceil(molecule.n_orbitals))
-         self.active = (kwargs.get('as', 'False'))
-         if self.active != 'False':
-         
-             self.ecp = ''
-             self.active.replace('(','')
-             
-             self.active = self.active.split(',')
-             for i in range(0, len(self.active)):
-                 self.active[i]=int(self.active[i])
-             for i in range(0, molecule.n_orbitals):
-                 if i not in self.active:
-                     self.ecp+=str(i)+','
-             self.ecp = self.ecp[:-1]
-            
-         else:
-             self.ecp = (kwargs.get('ecp', 'False'))
-         self.skips = (kwargs.get('skips', 'False'))
-         if self.skips == 'False':
-             self.skips = []
-         else:
-             self.skips.replace('(','')
-             self.skips = self.skips.split(',')
-             for i in range(0, len(self.skips)):
-                 self.skips[i]=int(self.skips[i])
-         #Associate a Hamiltonian with this system
-         self.molecule = molecule
-         if self.ecp == 'False':
-             #self.S2 = Make_S2(molecule.n_orbitals) 
-             self.hamiltonian = molecule.get_molecular_hamiltonian()
-             self.ecp = 0
-         else:
-             self.ecp.replace('(','')
-             self.ecp = self.ecp.split(',')
-
-             for i in range(0, len(self.ecp)):
-                 self.ecp[i]=int(self.ecp[i])
-             coreoccs = []
-             core = []
-             for i in self.ecp:
-                 if i*2<molecule.n_electrons:
-                     coreoccs.append(i)
-                 core.append(i) 
-
-             valence = []
-             for i in range(0, self.molecule.n_orbitals):
-                 if i not in core:
-                     valence.append(i)
-
-
-            
-             molecule.n_orbitals -= int(len(core))
-             molecule.n_qubits =2*molecule.n_orbitals
-             molecule.n_electrons -= int(len(coreoccs)*2)
-             print('Occupied spin-orbitals')
-             print(coreoccs)
-             print('Active orbitals')
-             print(valence)
-             self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = coreoccs, active_indices = valence)
-             #self.S2 = Make_S2(molecule.n_orbitals) 
-
-
          self.ecp = 0
+         #We give doccs and noccs as spatial orbitals, soccs as spin-orbitals 
+         self.active = (kwargs.get('active', 'False'))
+         self.active_doccs = (kwargs.get('occs', 'False'))
+         self.soccs = (kwargs.get('soccs', 'False'))
+         doccs = []
+         if self.soccs == 'False':
+             self.soccs = []
+         else:
+             self.soccs = [int(s) for s in self.soccs.split(',')]
+                
+         self.molecule = molecule
+         if self.active == 'False':
+
+             occupation = [i for i in range(0, math.ceil(molecule.n_electrons/2)-math.ceil(molecule.multiplicity/2)+1)]
+             active_indices = [i for i in range(0, molecule.n_orbitals)]
+             soccs = sorted(list(set(active_indices)-set(occupation)))[0:molecule.n_electrons-2*len(occupation)]
+             noccs = sorted(list(set(active_indices)-set(occupation)-set(soccs))) 
+             
+         else:
+
+
+             self.active = [int(s) for s in self.active.split(',')]
+             if self.active_doccs!='False':
+                 self.active_doccs = [int(s) for s in self.active_doccs.split(',')]
+             else:
+                 self.active_doccs = []
+             i = 0
+             while i<molecule.n_electrons:
+                 if i not in self.active:
+                     doccs.append(i)
+                 i+=1
+             occupation = doccs 
+             active_indices = [i for i in self.active]
+
+             soccs = self.soccs
+
+             noccs = sorted(list(set(active_indices)-set(self.active_doccs)-set(soccs)))
+             molecule.n_qubits = (len(active_indices)*2) 
+             molecule.n_orbitals = len(active_indices) 
+             available_elecs = molecule.n_electrons-len(soccs)-len(self.active_doccs)*2
+             #assert(available_elecs%2==0) 
+             doccs = [i for i in range(int(available_elecs/2)+1) if i not in active_indices]
+             molecule.n_electrons = 2*len(self.active_doccs)+len(soccs)
+
+         print("Active Spatial Orbitals:".ljust(50)+"{:s}".format(str(active_indices)))
+         print("Active Doubly Occupied Spatial Orbitals:".ljust(50)+"{:s}".format(str(self.active_doccs)))
+         print("Singly Occupied Spatial Orbitals:".ljust(50)+"{:s}".format(str(soccs)))
+         print("Virtual Spatial Orbitals:".ljust(50)+"{:s}".format(str(noccs)))
+         print("Qubits:".ljust(50)+"{:d}".format(molecule.n_qubits))
+         print("Electrons:".ljust(50)+"{:d}".format(molecule.n_electrons))
+
+         self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = doccs, active_indices = active_indices)
+             #self.S2 = Make_S2(molecule.n_orbitals) 
          
+         self.ecp = 0
+          
          self.two_index_hamiltonian = self.hamiltonian.one_body_tensor
          self.four_index_hamiltonian = self.hamiltonian.two_body_tensor
          self.JW_hamiltonian = openfermion.transforms.get_sparse_operator(self.hamiltonian)         
@@ -164,17 +155,26 @@ class Operator_Bank:
          self.alphas = self.aoccs+self.anoccs
          self.betas = self.boccs+self.bnoccs
 
+         occ = []
          #Construct reference ket
-         #Obtain some useful global data
-         occupation = []
+         j = 0
+         for i in self.active:
+             if j>molecule.n_electrons:
+                 break 
+             if i in self.active_doccs:
+                 occ.append(j*2)
+                 occ.append(j*2+1)
+                 j+=1
 
-         for i in (list(range(0,molecule.n_electrons+len(self.skips)))): 
-             if i not in self.skips:
-                 occupation.append(i)
-
+             elif i in soccs:
+                 occ.append(j*2)
+                 j+=1
+         for i in range(0, len(occ)):
+             occ[i] = int(occ[i])
          
-         self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(occupation, molecule.n_qubits-2*int(self.ecp))).transpose()
-
+         self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(occ, molecule.n_qubits)).transpose()
+         occupation = print('HF Occupation State: '.ljust(50)+'{:s}'.format(bin(self.HF_ket.nonzero()[0][0])))
+         print("\n"*2)
          #Parse kwargs
          self.include_pqrs = kwargs.get('include_pqrs', 'False')
          self.screen_commutators = kwargs.get('screen_commutators', 'False')
@@ -188,7 +188,7 @@ class Operator_Bank:
          self.Doubles = []
          self.Full_JW_Ops = []
 
-         #Get https://mail.google.com/mail/u/0/#inboxunfiltered list
+
          if self.include_pqrs == 'True':
              if self.spin_adapt == 'False':
                  self.PQRS()
@@ -210,6 +210,7 @@ class Operator_Bank:
          for op in self.Full_SQ_Ops:
              op = openfermion.normal_ordered(op)
              if op.many_body_order()>0:
+
                  self.Full_JW_Ops.append(openfermion.transforms.get_sparse_operator(op, n_qubits = self.molecule.n_qubits-int(self.ecp)*2))
          #Apply filters
          if self.screen_commutators == 'True':
