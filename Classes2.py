@@ -88,6 +88,7 @@ class Operator_Bank:
     def __init__(self, molecule, **kwargs):
          self.ecp = 0
          #We give doccs and noccs as spatial orbitals, soccs as spin-orbitals 
+
          self.active = (kwargs.get('active', 'False'))
          self.active_doccs = (kwargs.get('occs', 'False'))
          self.soccs = (kwargs.get('soccs', 'False'))
@@ -100,12 +101,17 @@ class Operator_Bank:
          self.molecule = molecule
          if self.active == 'False':
 
-             occupation = [i for i in range(0, math.ceil(molecule.n_electrons/2)-math.ceil(molecule.multiplicity/2)+1)]
+             occupation = []
              active_indices = [i for i in range(0, molecule.n_orbitals)]
-             soccs = sorted(list(set(active_indices)-set(occupation)))[0:molecule.n_electrons-2*len(occupation)]
-             noccs = sorted(list(set(active_indices)-set(occupation)-set(soccs))) 
-             
+             unpaired = molecule.multiplicity-1
+             occs = [i for i in range(0, int((molecule.n_electrons-unpaired)/2))]
+             soccs = [i for i in range(occs[-1]+1, occs[-1]+unpaired+1)]
+             noccs = sorted(list(set(active_indices)-set(occs)-set(occupation)-set(soccs))) 
+
+             self.S2 = Make_S2(molecule.n_orbitals) 
+
          else:
+
 
 
              self.active = [int(s) for s in self.active.split(',')]
@@ -126,10 +132,12 @@ class Operator_Bank:
              noccs = sorted(list(set(active_indices)-set(self.active_doccs)-set(soccs)))
              molecule.n_qubits = (len(active_indices)*2) 
              molecule.n_orbitals = len(active_indices) 
+             self.S2 = Make_S2(molecule.n_orbitals) 
              available_elecs = molecule.n_electrons-len(soccs)-len(self.active_doccs)*2
              #assert(available_elecs%2==0) 
              doccs = [i for i in range(int(available_elecs/2)+1) if i not in active_indices]
              molecule.n_electrons = 2*len(self.active_doccs)+len(soccs)
+
 
          print("Active Spatial Orbitals:".ljust(50)+"{:s}".format(str(active_indices)))
          print("Active Doubly Occupied Spatial Orbitals:".ljust(50)+"{:s}".format(str(self.active_doccs)))
@@ -139,7 +147,7 @@ class Operator_Bank:
          print("Electrons:".ljust(50)+"{:d}".format(molecule.n_electrons))
 
          self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = doccs, active_indices = active_indices)
-         self.S2 = Make_S2(molecule.n_orbitals) 
+
          
          self.ecp = 0
           
@@ -158,8 +166,9 @@ class Operator_Bank:
          occ = []
          #Construct reference ket
          j = 0
+
          for i in self.active:
-             if j>molecule.n_electrons:
+             if j>=molecule.n_electrons:
                  break 
              if i in self.active_doccs:
                  occ.append(j*2)
@@ -171,9 +180,8 @@ class Operator_Bank:
                  j+=1
          for i in range(0, len(occ)):
              occ[i] = int(occ[i])
-         
+
          self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(occ, molecule.n_qubits)).transpose()
-         occupation = print('HF Occupation State: '.ljust(50)+'{:s}'.format(bin(self.HF_ket.nonzero()[0][0])))
          print("\n"*2)
          #Parse kwargs
          self.include_pqrs = kwargs.get('include_pqrs', 'False')
@@ -417,7 +425,7 @@ class Operator_Bank:
                 one_elec_2 -= openfermion.hermitian_conjugated(one_elec_2)
                 one_elec = one_elec*one_elec_2-one_elec_2*one_elec
                 one_elec = openfermion.normal_ordered(one_elec)
-                print(one_elec)
+
                 norm = 0
                 for term in one_elec.terms:
                     norm += one_elec.terms[term]*one_elec.terms[term]
@@ -452,7 +460,7 @@ class Operator_Bank:
                 print('term:'+str(two_elec3))
                 print('complement:'+str(two_elec4))
                 
-                print(openfermion.normal_ordered(two_elec*two_elec2-two_elec2*two_elec))
+
                 #print(openfermion.normal_ordered(two_elec*two_elec3-two_elec3*two_elec))
                 #print(openfermion.normal_ordered(two_elec*two_elec4-two_elec4*two_elec))
                 #print(openfermion.normal_ordered(two_elec*two_elec5-two_elec5*two_elec))

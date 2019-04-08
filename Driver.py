@@ -54,7 +54,6 @@ logging.info('CASCI S^2 = '+str((scipy.sparse.csc_matrix(v).transpose().conj().d
 molecule.fci_energy = e[x[0]].real
 try:
     v1 = v[x[0]]
-    print(scipy.sparse.csc_matrix(v))
 except:
     pass
 print('CI energy for defined space'.ljust(50)+'{}'.format(molecule.fci_energy))
