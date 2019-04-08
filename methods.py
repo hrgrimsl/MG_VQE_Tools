@@ -169,6 +169,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         except:
             pass
         i_iter += 1
+    logging.info('ADAPT S^2 = '+str(S2))
     return OptRes
 
 def HOPS(molecule, ops, theta_tightness, ADAPT_tightness, logging):

@@ -45,10 +45,12 @@ start = timer()
 ops = Operator_Bank(molecule, **Get_Op_Kwargs(args.input))
 h = (ops.JW_hamiltonian)
 if h.shape[0]<128:
-    e = np.linalg.eigh(h.toarray())[0]
+    e,v = np.linalg.eigh(h.toarray())
 else:
     e,v = (scipy.sparse.linalg.eigsh(h, k = 1, v0 = ops.HF_ket.toarray()))
 x = np.argsort(np.array(e))
+logging.info('Reference S^2 = '+str(ops.HF_ket.transpose().conj().dot(ops.S2).dot(ops.HF_ket).toarray()[0][0]))
+logging.info('CASCI S^2 = '+str((scipy.sparse.csc_matrix(v).transpose().conj().dot(ops.S2).dot(scipy.sparse.csc_matrix(v))).toarray()[0][0].real))
 molecule.fci_energy = e[x[0]].real
 try:
     v1 = v[x[0]]

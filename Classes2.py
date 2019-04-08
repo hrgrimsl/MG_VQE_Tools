@@ -139,7 +139,7 @@ class Operator_Bank:
          print("Electrons:".ljust(50)+"{:d}".format(molecule.n_electrons))
 
          self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = doccs, active_indices = active_indices)
-             #self.S2 = Make_S2(molecule.n_orbitals) 
+         self.S2 = Make_S2(molecule.n_orbitals) 
          
          self.ecp = 0
           
