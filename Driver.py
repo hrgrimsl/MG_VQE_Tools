@@ -43,11 +43,14 @@ logging.info('HF = '+str(molecule.hf_energy))
 print('Constructing operator bank...')
 start = timer()
 ops = Operator_Bank(molecule, **Get_Op_Kwargs(args.input))
-h = (ops.JW_hamiltonian)
-e,v = np.linalg.eigh(h.toarray(), k = 6)
-x = np.argsort(np.array(e))
-logging.info('Reference S^2 = '+str(ops.HF_ket.transpose().conj().dot(ops.S2).dot(ops.HF_ket).toarray()[0][0]))
-logging.info('CASCI S^2 = '+str((scipy.sparse.csc_matrix(v).transpose().conj().dot(ops.S2).dot(scipy.sparse.csc_matrix(v))).toarray()[0][0].real))
+#h = (ops.JW_hamiltonian)
+#e,v = np.linalg.eigh(h.toarray())
+#x = np.argsort(np.array(e))
+try:
+    logging.info('Reference S^2 = '+str(ops.HF_ket.transpose().conj().dot(ops.S2).dot(ops.HF_ket).toarray()[0][0]))
+    logging.info('CASCI S^2 = '+str((scipy.sparse.csc_matrix(v).transpose().conj().dot(ops.S2).dot(scipy.sparse.csc_matrix(v))).toarray()[0][0].real))
+except:
+    pass
 molecule.fci_energy = e[x[0]].real
 try:
     v1 = v[x[0]]

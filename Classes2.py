@@ -108,7 +108,10 @@ class Operator_Bank:
              soccs = [i for i in range(occs[-1]+1, occs[-1]+unpaired+1)]
              noccs = sorted(list(set(active_indices)-set(occs)-set(occupation)-set(soccs))) 
 
-             self.S2 = Make_S2(molecule.n_orbitals) 
+             try:
+                 self.S2 = Make_S2(molecule.n_orbitals) 
+             except:
+                 print('S2 calculation unsuccessful.') 
 
          else:
 
@@ -131,8 +134,11 @@ class Operator_Bank:
 
              noccs = sorted(list(set(active_indices)-set(self.active_doccs)-set(soccs)))
              molecule.n_qubits = (len(active_indices)*2) 
-             molecule.n_orbitals = len(active_indices) 
-             self.S2 = Make_S2(molecule.n_orbitals) 
+             molecule.n_orbitals = len(active_indices)
+             try: 
+                 self.S2 = Make_S2(molecule.n_orbitals) 
+             except:
+                 pass
              available_elecs = molecule.n_electrons-len(soccs)-len(self.active_doccs)*2
              #assert(available_elecs%2==0) 
              doccs = [i for i in range(int(available_elecs/2)+1) if i not in active_indices]

@@ -39,10 +39,10 @@ def Optimize(molecule, ops, logging, **kwargs):
         outcome = HOPS(molecule, ops, theta_tightness, ADAPT_tightness, logging)
     if algorithm == 'VarStep':
         outcome = VarStep(molecule, ops, theta_tightness, ADAPT_tightness, logging)
-    if algorithm == 'FCI':
+    if algorithm == 'CASCI':
         wfile = open('CASCI.out', 'a')
         h = ops.JW_hamiltonian
-        e = sorted(scipy.sparse.linalg.eigsh(h, k = 120)[0])[0].real
+        e,v = np.linalg.eig(h.toarray())
         wfile.write(str(e)+'\n')
         print(str(e))
         exit()
