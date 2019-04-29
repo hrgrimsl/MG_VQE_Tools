@@ -160,13 +160,13 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         for i in reversed(range(0, len(parameters))):
             current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 
         
-        S2 = current_ket.transpose().conj().dot(ops.S2.dot(current_ket)).toarray()[0][0].real
+        #S2 = current_ket.transpose().conj().dot(ops.S2.dot(current_ket)).toarray()[0][0].real
 
         print('Energy: {:+10.14f}'.format(energy))
 
 
         i_iter += 1
-        logging.info('ADAPT S^2 = '+str(S2))
+        #logging.info('ADAPT S^2 = '+str(S2))
     return OptRes
 
 def HOPS(molecule, ops, theta_tightness, ADAPT_tightness, logging):

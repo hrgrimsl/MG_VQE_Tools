@@ -84,11 +84,12 @@ def Make_S2(n_orb):
 
 
 
+       
+
 class Operator_Bank:
     def __init__(self, molecule, **kwargs):
          self.ecp = 0
          #We give doccs and noccs as spatial orbitals, soccs as spin-orbitals 
-
          self.active = (kwargs.get('active', 'False'))
          self.active_doccs = (kwargs.get('occs', 'False'))
          self.soccs = (kwargs.get('soccs', 'False'))
@@ -99,64 +100,34 @@ class Operator_Bank:
              self.soccs = [int(s) for s in self.soccs.split(',')]
                 
          self.molecule = molecule
+
          if self.active == 'False':
 
              occupation = []
              active_indices = [i for i in range(0, molecule.n_orbitals)]
              unpaired = molecule.multiplicity-1
-             occs = [i for i in range(0, int((molecule.n_electrons-unpaired)/2))]
+             occs = [i for i in range(0, int(((molecule.n_electrons-unpaired)/2)))]
              soccs = [i for i in range(occs[-1]+1, occs[-1]+unpaired+1)]
              noccs = sorted(list(set(active_indices)-set(occs)-set(occupation)-set(soccs))) 
 
              try:
-                 self.S2 = Make_S2(molecule.n_orbitals) 
+                 pass
+                 #self.S2 = Make_S2(molecule.n_orbitals) 
              except:
-                 print('S2 calculation unsuccessful.') 
+                 print('S2 calculation unsuccessful or not attempted.') 
 
          else:
-
-
-
-             self.active = [int(s) for s in self.active.split(',')]
-             if self.active_doccs!='False':
-                 self.active_doccs = [int(s) for s in self.active_doccs.split(',')]
-             else:
-                 self.active_doccs = []
-             i = 0
-             while i<molecule.n_electrons:
-                 if i not in self.active:
-                     doccs.append(i)
-                 i+=1
-             occupation = doccs 
-             active_indices = [i for i in self.active]
-
-             soccs = self.soccs
-
-             noccs = sorted(list(set(active_indices)-set(self.active_doccs)-set(soccs)))
-             molecule.n_qubits = (len(active_indices)*2) 
-             molecule.n_orbitals = len(active_indices)
              try: 
                  self.S2 = Make_S2(molecule.n_orbitals) 
-             except:
+             except: 
                  pass
-             available_elecs = molecule.n_electrons-len(soccs)-len(self.active_doccs)*2
-             #assert(available_elecs%2==0) 
-             doccs = [i for i in range(int(available_elecs/2)+1) if i not in active_indices]
-             molecule.n_electrons = 2*len(self.active_doccs)+len(soccs)
 
 
-         print("Active Spatial Orbitals:".ljust(50)+"{:s}".format(str(active_indices)))
-         print("Active Doubly Occupied Spatial Orbitals:".ljust(50)+"{:s}".format(str(self.active_doccs)))
-         print("Singly Occupied Spatial Orbitals:".ljust(50)+"{:s}".format(str(soccs)))
-         print("Virtual Spatial Orbitals:".ljust(50)+"{:s}".format(str(noccs)))
-         print("Qubits:".ljust(50)+"{:d}".format(molecule.n_qubits))
-         print("Electrons:".ljust(50)+"{:d}".format(molecule.n_electrons))
 
-         self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = doccs, active_indices = active_indices)
-
-         
-         self.ecp = 0
-          
+         doccs = [i for i in range(0, math.floor((molecule.n_electrons+molecule.multiplicity-2)/2))]
+         active = [i for i in range(len(doccs), len(doccs)+len(self.molecule.active))]
+         self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = doccs, active_indices = active) 
+         self.ecp = 0 
          self.two_index_hamiltonian = self.hamiltonian.one_body_tensor
          self.four_index_hamiltonian = self.hamiltonian.two_body_tensor
          self.JW_hamiltonian = openfermion.transforms.get_sparse_operator(self.hamiltonian)         
@@ -168,28 +139,18 @@ class Operator_Bank:
          self.bnoccs = [i for i in range(self.molecule.n_electrons, self.molecule.n_orbitals*2) if i%2 == 1]
          self.alphas = self.aoccs+self.anoccs
          self.betas = self.boccs+self.bnoccs
-
-         occ = []
          #Construct reference ket
-         j = 0
-
-         for i in self.active:
-             if j>=molecule.n_electrons:
-                 break 
-             if i in self.active_doccs:
-                 occ.append(j*2)
-                 occ.append(j*2+1)
-                 j+=1
-
-             elif i in soccs:
-                 occ.append(j*2)
-                 j+=1
-         for i in range(0, len(occ)):
-             occ[i] = int(occ[i])
-
+         occ = []
+         spinorbitals = self.molecule.n_electrons-2*self.molecule.n_fdoccs
+         skips = [2*(self.molecule.n_orbitals-i)+1 for i in range(0, self.molecule.multiplicity-1)]
+         for i in range(0, spinorbitals):
+             if i not in skips:
+                 occ.append(i)
+          
          self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(occ, molecule.n_qubits)).transpose()
          print("\n"*2)
          #Parse kwargs
+         print(self.HF_ket)
          self.include_pqrs = kwargs.get('include_pqrs', 'False')
          self.screen_commutators = kwargs.get('screen_commutators', 'False')
          self.sort = kwargs.get('sort', None)
@@ -317,6 +278,7 @@ class Operator_Bank:
     def GSD_Singlet(self):
         #Now with triples!:
         #Singles
+        num = openfermion.FermionOperator(())-openfermion.FermionOperator(())
         for i in range(int(self.ecp), self.molecule.n_orbitals):
             for a in range(i+1, self.molecule.n_orbitals):
                 one_elec = (1/np.sqrt(2))*openfermion.FermionOperator(((2*a-2*self.ecp,1),(2*i-2*self.ecp,0)))
@@ -329,7 +291,12 @@ class Operator_Bank:
                 if one_elec.many_body_order()>0 and norm!=0:
                     self.SQ_Singles.append(one_elec/np.sqrt(norm))
                     self.Singles.append([a-self.ecp,i-self.ecp])               
-                 
+            num+=openfermion.FermionOperator(((i*2,1),(i*2,0)))
+            num+=openfermion.FermionOperator(((i*2+1,1),(i*2+1,0)))
+        print(num) 
+        #self.num = openfermion.transforms.get_sparse_operator(num, n_qubits = self.molecule.n_qubits-int(self.ecp)*2)
+
+
         #Doubles
         pairs = []
         for j in range(int(self.ecp), self.molecule.n_orbitals):

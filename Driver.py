@@ -29,36 +29,19 @@ print('*' * 39)
 #Parse the input file to form a molecule object
 print('Obtaining molecular data...')
 molecule = Get_Molecule(args.input)
-logging.info('Geometry: '+str(molecule.geometry))
-logging.info('Basis: '+str(molecule.basis))
-logging.info('Multiplicity: '+str(molecule.multiplicity))
-
-logging.info('HF = '+str(molecule.hf_energy))
-
-
-
-
 #Obtain some useful global data
-
 print('Constructing operator bank...')
 start = timer()
 ops = Operator_Bank(molecule, **Get_Op_Kwargs(args.input))
-#h = (ops.JW_hamiltonian)
-#e,v = np.linalg.eigh(h.toarray())
-#x = np.argsort(np.array(e))
-try:
-    logging.info('Reference S^2 = '+str(ops.HF_ket.transpose().conj().dot(ops.S2).dot(ops.HF_ket).toarray()[0][0]))
-    logging.info('CASCI S^2 = '+str((scipy.sparse.csc_matrix(v).transpose().conj().dot(ops.S2).dot(scipy.sparse.csc_matrix(v))).toarray()[0][0].real))
-except:
-    pass
-molecule.fci_energy = e[x[0]].real
+
+
 try:
     v1 = v[x[0]]
 except:
     pass
-print('CI energy for defined space'.ljust(50)+'{}'.format(molecule.fci_energy))
+print('CI energy for defined space'.ljust(50)+'{}'.format(molecule.CASCI))
 
-logging.info('CASCI = '+str(molecule.fci_energy))
+
 end = timer()
 print('Operators constructed in '.ljust(50)+str(end-start)+' seconds!')
 print(str(len(ops.Full_Ops))+' operations!')
@@ -66,9 +49,21 @@ print(str(len(ops.Full_Ops))+' operations!')
 outcome = Optimize(molecule, ops, logging, **Get_Method_Kwargs(args.input))
 end = timer()
 
+h = (ops.JW_hamiltonian)
+
+#e,v = np.linalg.eigh(h.toarray())
+#e,v = scipy.sparse.linalg.eigsh(h, k = 10)
+
+#x = np.argsort(np.array(e))
+#for i in range(0, 5):
+#    casci_vec = scipy.sparse.csc_matrix(v.T[x[i]])
+#    molecule.fci_energy = e[x[i]].real
+#    logging.info('CASCI: '+str(molecule.fci_energy)+('S2: '+str(casci_vec.dot(ops.S2).dot(casci_vec.T.conj()).toarray()[0][0].real)))
+logging.info('HF ket = '+str(ops.HF_ket))
+#logging.info('HF electrons = '+str(ops.HF_ket.T.conj().dot(ops.num).dot(ops.HF_ket).toarray()[0][0].real))
 #Log results
 logging.info('Optimized energy = '+str(outcome.fun))
-logging.info('Error = '+str(outcome.fun-molecule.fci_energy))
+logging.info('Error = '+str(outcome.fun-molecule.CASCI))
 logging.info('Iterations = '+str(outcome.nit))
 logging.info('Total time (s) = '+str(end-start))
 logging.info(str(len(outcome.x))+' parameters.')

@@ -1,7 +1,10 @@
+import inspect
 import re
 import os
 import openfermion
 import openfermionpsi4
+import spock
+from spock import core
 
 def Get_Molecule(input_file):
     in_file = open(input_file)
@@ -10,6 +13,9 @@ def Get_Molecule(input_file):
     loc = False
     swap = []
     skips = []
+    op_kwargs = Get_Op_Kwargs(input_file)
+    op_kwargs['active'] = [int(x) for x in op_kwargs['active'].split(',')]
+    op_kwargs['reorder'] = [int(x) for x in op_kwargs['reorder'].split(',')]
     for line in in_file:
         if re.search('basis', line):
             basis = line.split()[1]
@@ -30,22 +36,18 @@ def Get_Molecule(input_file):
             psi_file = line.split()[1]
         elif re.search('loc', line):
             loc  = line.split()[1]
-        elif re.search('nfd', line):
-            nfd = line.split()[1]
+        elif re.search('n_fdoccs', line):
+            n_fdoccs = int(line.split()[1])
         elif re.search('swap', line):
             swap.append([int(line.split()[1]),int(line.split()[2])])
+        elif re.search('output', line):
+            output = line.split()[1]
 
+    molecule = spock.core.molecule(geometry = geometry, basis = basis, charge = charge, multiplicity = multiplicity, active = op_kwargs['active'], reorder = op_kwargs['reorder'], n_fdoccs = n_fdoccs, output = output)
+    molecule = molecule.run_psi4()
 
-    molecule = openfermion.hamiltonians.MolecularData(geometry, basis, multiplicity, charge)
-
+    
     molecule.filename = psi_file
-
-    try:
-        molecule.load()
-        print('Loading existing molecule.')
-    except:  
-        print('Computing new molecule.')
-        molecule = openfermionpsi4.run_psi4(molecule, run_scf = 1, run_mp2 = 0, run_ccsd = 0, run_cisd = 0, run_fci = 0, localize = loc)
 
     return molecule
 
@@ -55,7 +57,6 @@ def Get_Op_Kwargs(input_file):
     for line in in_file:
         if re.search('op_kwarg', line):
             op_kwargs[line.split()[1]]=line.split()[2]
-
     return op_kwargs
 
 def Get_Method_Kwargs(input_file):
