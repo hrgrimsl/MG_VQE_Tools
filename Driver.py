@@ -31,6 +31,7 @@ print('Obtaining molecular data...')
 molecule = Get_Molecule(args.input)
 #Obtain some useful global data
 print('Constructing operator bank...')
+print(molecule.fci_energy)
 start = timer()
 ops = Operator_Bank(molecule, **Get_Op_Kwargs(args.input))
 
@@ -39,8 +40,11 @@ try:
     v1 = v[x[0]]
 except:
     pass
-print('CI energy for defined space'.ljust(50)+'{}'.format(molecule.CASCI))
+try:
+    print('CI energy for defined space'.ljust(50)+'{}'.format(molecule.CASCI))
 
+except:
+    print('No CI energy computed.')
 
 end = timer()
 print('Operators constructed in '.ljust(50)+str(end-start)+' seconds!')
@@ -62,6 +66,7 @@ h = (ops.JW_hamiltonian)
 logging.info('HF ket = '+str(ops.HF_ket))
 #logging.info('HF electrons = '+str(ops.HF_ket.T.conj().dot(ops.num).dot(ops.HF_ket).toarray()[0][0].real))
 #Log results
+logging.info('DETCI = '+str(molecule.CASCI))
 logging.info('Optimized energy = '+str(outcome.fun))
 logging.info('Error = '+str(outcome.fun-molecule.CASCI))
 logging.info('Iterations = '+str(outcome.nit))

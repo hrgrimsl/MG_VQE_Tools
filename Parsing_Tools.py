@@ -14,8 +14,14 @@ def Get_Molecule(input_file):
     swap = []
     skips = []
     op_kwargs = Get_Op_Kwargs(input_file)
-    op_kwargs['active'] = [int(x) for x in op_kwargs['active'].split(',')]
-    op_kwargs['reorder'] = [int(x) for x in op_kwargs['reorder'].split(',')]
+    try:
+        op_kwargs['active'] = [int(x) for x in op_kwargs['active'].split(',')]
+    except:
+        op_kwargs['active'] = None
+    try:
+        op_kwargs['reorder'] = [int(x) for x in op_kwargs['reorder'].split(',')]
+    except:
+        op_kwargs['reorder'] = None
     for line in in_file:
         if re.search('basis', line):
             basis = line.split()[1]
@@ -42,12 +48,20 @@ def Get_Molecule(input_file):
             swap.append([int(line.split()[1]),int(line.split()[2])])
         elif re.search('output', line):
             output = line.split()[1]
-
-    molecule = spock.core.molecule(geometry = geometry, basis = basis, charge = charge, multiplicity = multiplicity, active = op_kwargs['active'], reorder = op_kwargs['reorder'], n_fdoccs = n_fdoccs, output = output)
-    molecule = molecule.run_psi4()
-
-    
+    try:
+        molecule = openfermion.hamiltonians.MolecularData(geometry = geometry, basis = basis, multiplicity = multiplicity, filename = psi_file)
+        molecule.load()
+        molecule.active = op_kwargs['active']
+        molecule.n_fdoccs = n_fdoccs
+        molecule.CASCI = molecule.fci_energy
+        print('Loaded existing molecule.')    
+        
+    except:
+        print('Computing new molecule.')
+        molecule = spock.core.molecule(geometry = geometry, basis = basis, charge = charge, multiplicity = multiplicity, active = op_kwargs['active'], reorder = op_kwargs['reorder'], n_fdoccs = n_fdoccs, output = output, loc = loc)
+        molecule = molecule.run_psi4()
     molecule.filename = psi_file
+    molecule.save()
 
     return molecule
 

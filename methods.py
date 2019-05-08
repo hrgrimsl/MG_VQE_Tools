@@ -57,7 +57,6 @@ def VQE(molecule, parameters, ops, theta_tightness, logging):
     print('Performing optimization of parameters...')
     optimization = scipy.optimize.minimize(Trotter_SPE, parameters, jac = Trotter_Gradient, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False}, callback = Callback)
     print(str(len(parameters))+' parameters optimized in '+str(optimization.nit)+' iterations!')
-    print('Current energy: '+str(optimization.fun))
     return optimization
 
 def VQE_No_H(molecule, parameters, ops, theta_tightness, logging):
@@ -113,6 +112,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
                 print('{:+10.14f}'.format(vector[i])+' {:10s}'.format(str(ops.Full_Ops[i])))
         print('\n')
         '''
+
         try:
             print('Next operation: {:10s}'.format(str(ops.Full_Ops[num])))
             print('Next gradient: {:+10.14f}'.format(grad))
@@ -130,6 +130,8 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         if abs(gradients[-1])<ADAPT_tightness:
             if len(gradients) == 2:
                 OptRes = scipy.optimize.OptimizeResult(x=(), fun = molecule.hf_energy, nit = 0)
+            print('Optimized wfn:')
+            print(current_ket.toarray().real())
             continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])

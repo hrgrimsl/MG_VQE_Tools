@@ -124,8 +124,12 @@ class Operator_Bank:
 
 
 
-         doccs = [i for i in range(0, math.floor((molecule.n_electrons+molecule.multiplicity-2)/2))]
-         active = [i for i in range(len(doccs), len(doccs)+len(self.molecule.active))]
+         doccs = [i for i in range(0, int((2*molecule.n_electrons+1-molecule.multiplicity)/4))]
+         if self.molecule.active!=None:
+             active = [i for i in range(len(doccs), len(doccs)+len(self.molecule.active))]
+         else:
+             active = [i for i in range(0, self.molecule.n_orbitals)]
+
          self.hamiltonian = molecule.get_molecular_hamiltonian(occupied_indices = doccs, active_indices = active) 
          self.ecp = 0 
          self.two_index_hamiltonian = self.hamiltonian.one_body_tensor
@@ -146,11 +150,13 @@ class Operator_Bank:
          for i in range(0, spinorbitals):
              if i not in skips:
                  occ.append(i)
-          
+         print(occ)
+         print(molecule.n_qubits) 
          self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(occ, molecule.n_qubits)).transpose()
+         print(self.HF_ket)
          print("\n"*2)
          #Parse kwargs
-         print(self.HF_ket)
+
          self.include_pqrs = kwargs.get('include_pqrs', 'False')
          self.screen_commutators = kwargs.get('screen_commutators', 'False')
          self.sort = kwargs.get('sort', None)
@@ -293,7 +299,7 @@ class Operator_Bank:
                     self.Singles.append([a-self.ecp,i-self.ecp])               
             num+=openfermion.FermionOperator(((i*2,1),(i*2,0)))
             num+=openfermion.FermionOperator(((i*2+1,1),(i*2+1,0)))
-        print(num) 
+
         #self.num = openfermion.transforms.get_sparse_operator(num, n_qubits = self.molecule.n_qubits-int(self.ecp)*2)
 
 
