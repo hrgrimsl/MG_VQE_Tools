@@ -104,6 +104,7 @@ class Operator_Bank:
          if self.active == 'False':
 
              occupation = []
+
              active_indices = [i for i in range(0, molecule.n_orbitals)]
              unpaired = molecule.multiplicity-1
              occs = [i for i in range(0, int(((molecule.n_electrons-unpaired)/2)))]
@@ -124,7 +125,7 @@ class Operator_Bank:
 
 
 
-         doccs = [i for i in range(0, int((2*molecule.n_electrons+1-molecule.multiplicity)/4))]
+         doccs = [i for i in range(0, self.molecule.n_fdoccs)]
          if self.molecule.active!=None:
              active = [i for i in range(len(doccs), len(doccs)+len(self.molecule.active))]
          else:
@@ -145,15 +146,24 @@ class Operator_Bank:
          self.betas = self.boccs+self.bnoccs
          #Construct reference ket
          occ = []
+
          spinorbitals = self.molecule.n_electrons-2*self.molecule.n_fdoccs
-         skips = [2*(self.molecule.n_orbitals-i)+1 for i in range(0, self.molecule.multiplicity-1)]
-         for i in range(0, spinorbitals):
-             if i not in skips:
-                 occ.append(i)
-         print(occ)
-         print(molecule.n_qubits) 
+         soccs = int(self.molecule.multiplicity-1)
+         try:
+             doccs = int(((molecule.n_electrons-2*self.molecule.n_fdoccs)-soccs)/2)
+         except:
+             doccs = int((self.molecule.n_electrons-soccs)/2)
+         for i in range(0, doccs):
+             occ.append(2*i)
+             occ.append(2*i+1)
+         for i in range(doccs, doccs+soccs):
+             occ.append(2*i)
+
+         if self.molecule.occ!='None' and self.molecule.occ!=None:
+             occ = self.molecule.occ
+         print('Electron configuration: '+str(occ))
          self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(occ, molecule.n_qubits)).transpose()
-         print(self.HF_ket)
+
          print("\n"*2)
          #Parse kwargs
 
@@ -191,11 +201,10 @@ class Operator_Bank:
          for op in self.Full_SQ_Ops:
              op = openfermion.normal_ordered(op)
              if op.many_body_order()>0:
-
-                 self.Full_JW_Ops.append(openfermion.transforms.get_sparse_operator(op, n_qubits = self.molecule.n_qubits-int(self.ecp)*2))
+                 self.Full_JW_Ops.append(openfermion.transforms.get_sparse_operator(op, n_qubits = self.molecule.n_qubits))
          #Apply filters
          if self.screen_commutators == 'True':
-             print('Screening by commutators with Hamiltonian (HF ansatz)...')
+
              self.Screen_Commutators()
 
          #Apply sorting method
@@ -218,36 +227,25 @@ class Operator_Bank:
         return cache_string
 
     def PQRS(self):
-        
-        #Singles
-        #aa
-        for i in self.alphas:
-            for a in self.alphas:
-                if a>i:
-                    one_elec = openfermion.FermionOperator(((a-2*self.ecp,1),(i-2*self.ecp,0)))-openfermion.FermionOperator(((i-2*self.ecp,1),(a-self.ecp,0)))
-                    norm = 0
-                    for term in one_elec.terms:
-                        norm += one_elec.terms[term]*one_elec.terms[term]
-                    self.SQ_Singles.append(one_elec/np.sqrt(norm))
-                    self.Singles.append([a-2*self.ecp,i-2*self.ecp])
 
-        #bb
-        for i in self.betas:
-            for a in self.betas:
-                if a>i:
-                    one_elec = openfermion.FermionOperator(((a-2*self.ecp,1),(i-2*self.ecp,0)))-openfermion.FermionOperator(((i-2*self.ecp,1),(a-2*self.ecp,0)))
+        #Singles
+        #Singles
+        for i in range(0, self.molecule.n_orbitals*2):
+             for a in range(0, self.molecule.n_orbitals*2):
+                 if a<i and a%2==i%2:
+                    one_elec = openfermion.FermionOperator(((a,1),(i,0)))-openfermion.FermionOperator(((i,1),(a,0)))
                     norm = 0
                     for term in one_elec.terms:
                         norm += one_elec.terms[term]*one_elec.terms[term]
                     self.SQ_Singles.append(one_elec/np.sqrt(norm))
-                    self.Singles.append([a-2*self.ecp,i-2*self.ecp])
+                    self.Singles.append([a,i])
 
     
         #Doubles
         pairs = []
-        for i in range(int(self.ecp)*2, self.molecule.n_orbitals*2):
+        for i in range(0, self.molecule.n_orbitals*2):
             for j in range(i+1, self.molecule.n_orbitals*2):
-                pairs.append([i-2*self.ecp,j-2*self.ecp])
+                pairs.append([i,j])
         for p in range(0, len(pairs)):
             for q in range(p+1, len(pairs)):
                 j,i = pairs[p]
@@ -259,6 +257,7 @@ class Operator_Bank:
                         norm += two_elec.terms[term]*two_elec.terms[term]
                     self.SQ_Doubles.append(two_elec/np.sqrt(norm))
                     self.Doubles.append([a,i,b,j])
+
         '''
         #Triples
         pairs = []

@@ -130,8 +130,6 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         if abs(gradients[-1])<ADAPT_tightness:
             if len(gradients) == 2:
                 OptRes = scipy.optimize.OptimizeResult(x=(), fun = molecule.hf_energy, nit = 0)
-            print('Optimized wfn:')
-            print(current_ket.toarray().real())
             continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
