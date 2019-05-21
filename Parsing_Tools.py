@@ -2,7 +2,7 @@ import inspect
 import re
 import os
 import openfermion
-import openfermionpsi4
+
 import spock
 from spock import core
 
