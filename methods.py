@@ -453,6 +453,10 @@ def RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed):
         num = random.randint(0, len(ops.Full_Ops)-1)
         print('\nIteration '+str(len(parameters))+'.\n')
         print('Significant gradients:\n')
+        try:
+            logging.info(str(energy))
+        except:
+            pass
         for i in range(0, len(vector)):
             if abs(vector[i])>ADAPT_tightness:
                 print('{:+10.14f}'.format(vector[i])+' {:10s}'.format(str(ops.Full_Ops[i])))
@@ -543,6 +547,7 @@ def LADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
         print('\n')        
         energy = OptRes.fun
         print(energy)
+        logging.info(str(energy))
         current_ket = copy.copy(ops.HF_ket)
         for i in reversed(range(0, len(parameters))):
              current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 

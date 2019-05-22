@@ -258,30 +258,7 @@ class Operator_Bank:
                     self.SQ_Doubles.append(two_elec/np.sqrt(norm))
                     self.Doubles.append([a,i,b,j])
 
-        '''
-        #Triples
-        pairs = []
-        for j in range(int(self.ecp), self.molecule.n_qubits):
-            for i in range(j+1, self.molecule.n_qubits):
-                for k in range(j+1, self.molecule.n_qubits):
-                    pairs.append([i-self.ecp,j-self.ecp,k-self.ecp])
-        
-        for pair in range(0, len(pairs)):
-            for pair2 in range(pair+1, len(pairs)):
-                i, j,k = pairs[pair]
-                a, b,c = pairs[pair2]           
-                three_elec = openfermion.FermionOperator(((a,1),   (b,1), (c,1),(k,0)  ,(i,0),    (j,0)))
-                norm = 0
-                three_elec -= openfermion.hermitian_conjugated(three_elec)
-                three_elec = openfermion.normal_ordered(three_elec)
-                for term in three_elec.terms:
-                    norm += three_elec.terms[term]*three_elec.terms[term]
-                if three_elec.many_body_order()>0 and norm!=0:
-                    self.SQ_Doubles.append(three_elec/np.sqrt(norm))
-                    self.Doubles.append([a,b,c,k,i,j])               
-        '''
     def GSD_Singlet(self):
-        #Now with triples!:
         #Singles
         num = openfermion.FermionOperator(())-openfermion.FermionOperator(())
         for i in range(int(self.ecp), self.molecule.n_orbitals):
@@ -298,9 +275,6 @@ class Operator_Bank:
                     self.Singles.append([a-self.ecp,i-self.ecp])               
             num+=openfermion.FermionOperator(((i*2,1),(i*2,0)))
             num+=openfermion.FermionOperator(((i*2+1,1),(i*2+1,0)))
-
-        #self.num = openfermion.transforms.get_sparse_operator(num, n_qubits = self.molecule.n_qubits-int(self.ecp)*2)
-
 
         #Doubles
         pairs = []
