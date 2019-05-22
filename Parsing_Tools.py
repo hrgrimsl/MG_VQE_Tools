@@ -3,8 +3,7 @@ import re
 import os
 import openfermion
 
-import spock
-from spock import core
+import spock.core
 
 def Get_Molecule(input_file):
     in_file = open(input_file)
