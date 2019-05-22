@@ -1,7 +1,5 @@
 import scipy
 import numpy as np
-import openfermioncirq
-import cirq
 import copy
 
 def Trotter_SPE(parameters, ops):
