@@ -4,7 +4,7 @@ psi_file LiH
 charge 0
 
 atom Li 0 0 0
-atom H 0 0 0.9
+atom H 0 0 2.39
 loc False
 n_fdoccs 0
 output out.dat
@@ -14,8 +14,8 @@ op_kwarg spin_adapt True
 op_kwarg active 0,1,2,3,4,5
 op_kwarg reorder 0,1,2,3,4,5
 
-method_kwarg algorithm ADAPT
+method_kwarg algorithm UCC
 
 method_kwarg theta_tightness 1e-7
-method_kwarg ADAPT_tightness 1e-5
+method_kwarg ADAPT_tightness 1e-6
 
