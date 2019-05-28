@@ -91,6 +91,8 @@ class Operator_Bank:
          self.ecp = 0
          #We give doccs and noccs as spatial orbitals, soccs as spin-orbitals 
          self.active = (kwargs.get('active', 'False'))
+         self.intra = (kwargs.get('intra', None))
+         self.inter = (kwargs.get('inter', None))
          self.active_doccs = (kwargs.get('occs', 'False'))
          self.soccs = (kwargs.get('soccs', 'False'))
          doccs = []
@@ -112,8 +114,7 @@ class Operator_Bank:
              noccs = sorted(list(set(active_indices)-set(occs)-set(occupation)-set(soccs))) 
 
              try:
-                 pass
-                 #self.S2 = Make_S2(molecule.n_orbitals) 
+                 self.S2 = Make_S2(molecule.n_orbitals) 
              except:
                  print('S2 calculation unsuccessful or not attempted.') 
 
@@ -196,7 +197,13 @@ class Operator_Bank:
                      self.SD_Singlet()
 
          self.Full_Ops = self.Singles+self.Doubles
+
          self.Full_SQ_Ops = self.SQ_Singles+self.SQ_Doubles
+         if self.inter!=None:
+              random.seed(int(inter))
+              c = list(zip(self.Full_SQ_OPS, self.Full_Ops))
+              random.shuffle(c)
+              self.Full_SQ_Ops, self.Full_Ops = zip(*c)
          
          for op in self.Full_SQ_Ops:
              op = openfermion.normal_ordered(op)
@@ -299,7 +306,8 @@ class Operator_Bank:
                 if two_elec.many_body_order()>0 and norm!=0:
                     self.SQ_Doubles.append(two_elec/np.sqrt(norm))
                     self.Doubles.append([a,b,i,j])               
-
+                
+                 
                 two_elec = openfermion.FermionOperator(((2*a+1,1),(2*b,1),(2*i+1,0),(2*j,0)))
                 two_elec += openfermion.FermionOperator(((2*a,1),(2*b+1,1),(2*i,0),(2*j+1,0)))
                 two_elec -= openfermion.FermionOperator(((2*a,1),(2*b+1,1),(2*i+1,0),(2*j,0)))
@@ -517,7 +525,14 @@ class Operator_Bank:
                  if one_elec.many_body_order()>0 and norm!=0:
                      self.SQ_Singles.append(one_elec/np.sqrt(norm))
                      self.Singles.append([a-self.ecp,i-self.ecp])               
-      
+         
+         if self.intra!=None:
+              random.seed(int(intra))
+              c = list(zip(self.SQ_Singles, self.Singles))
+              random.shuffle(c)
+              self.SQ_Singles, self.Singles = zip(*c)
+ 
+              
          #Doubles
          pairs = []
          for j in range(int(self.ecp), int(self.molecule.n_electrons/2)):
@@ -551,6 +566,12 @@ class Operator_Bank:
                           if two_elec.many_body_order()>0 and norm!=0:
                               self.SQ_Doubles.append(two_elec/np.sqrt(norm))
                               self.Doubles.append([a-self.ecp,b-self.ecp,i-self.ecp,j-self.ecp])
+
+         if self.intra!=None:
+              random.seed(int(intra))
+              c = list(zip(self.SQ_Doubles, self.Doubles))
+              random.shuffle(c)
+              self.SQ_Doubles, self.Doubles = zip(*c)
 
 
 
