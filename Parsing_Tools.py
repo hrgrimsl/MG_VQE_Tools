@@ -8,7 +8,7 @@ import spock.core
 def Get_Molecule(input_file):
     in_file = open(input_file)
     geometry = []
-    psi_file = 'temp'
+
     loc = False
     swap = []
     skips = []
