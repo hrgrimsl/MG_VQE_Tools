@@ -8,12 +8,12 @@ import spock.core
 def Get_Molecule(input_file):
     in_file = open(input_file)
     geometry = []
-    psi_file = 'temp'
+
     loc = False
     swap = []
     skips = []
     op_kwargs = Get_Op_Kwargs(input_file)
-
+    
     try:
         op_kwargs['active'] = [int(x) for x in op_kwargs['active'].split(',')]
     except:

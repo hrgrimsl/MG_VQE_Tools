@@ -164,7 +164,10 @@ class Operator_Bank:
              occ = self.molecule.occ
          print('Electron configuration: '+str(occ))
          self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(occ, molecule.n_qubits)).transpose()
-
+         try:
+             print((self.HF_ket.transpose().dot(self.S2).dot(self.HF_ket)).toarray()[0][0].real)
+         except:
+             pass
          print("\n"*2)
          #Parse kwargs
 
@@ -199,9 +202,10 @@ class Operator_Bank:
          self.Full_Ops = self.Singles+self.Doubles
 
          self.Full_SQ_Ops = self.SQ_Singles+self.SQ_Doubles
+
          if self.inter!=None:
-              random.seed(int(inter))
-              c = list(zip(self.Full_SQ_OPS, self.Full_Ops))
+              random.seed(int(self.inter))
+              c = list(zip(self.Full_SQ_Ops, self.Full_Ops))
               random.shuffle(c)
               self.Full_SQ_Ops, self.Full_Ops = zip(*c)
          
