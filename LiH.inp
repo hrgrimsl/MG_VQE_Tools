@@ -1,6 +1,6 @@
 basis sto-3g
 multiplicity 1
-psi_file LiH
+psi_file lith
 charge 0
 
 atom Li 0 0 0
