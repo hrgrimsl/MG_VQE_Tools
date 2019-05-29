@@ -13,7 +13,7 @@ def Get_Molecule(input_file):
     swap = []
     skips = []
     op_kwargs = Get_Op_Kwargs(input_file)
-
+    
     try:
         op_kwargs['active'] = [int(x) for x in op_kwargs['active'].split(',')]
     except:
