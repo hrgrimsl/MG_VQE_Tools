@@ -9,11 +9,12 @@ loc False
 n_fdoccs 0
 output out.dat
 
-op_kwarg include_pqrs False
+op_kwarg include_pqrs True
 op_kwarg spin_adapt True
 op_kwarg active 0,1,2,3,4,5
 op_kwarg reorder 0,1,2,3,4,5
-op_kwarg repeats False
+op_kwarg repeats True
+op_kwarg kup True
 method_kwarg algorithm ADAPT
 
 method_kwarg theta_tightness 1e-7
