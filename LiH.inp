@@ -13,9 +13,9 @@ op_kwarg include_pqrs False
 op_kwarg spin_adapt True
 op_kwarg active 0,1,2,3,4,5
 op_kwarg reorder 0,1,2,3,4,5
-op_kwarg inter 30
-method_kwarg algorithm UCC
+op_kwarg repeats False
+method_kwarg algorithm ADAPT
 
 method_kwarg theta_tightness 1e-7
-method_kwarg ADAPT_tightness 1e-6
+method_kwarg ADAPT_tightness 1e-100
 method_kwarg RADAPT_seed 27

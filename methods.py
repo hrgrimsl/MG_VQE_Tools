@@ -102,8 +102,13 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
             comm = 2*hbra.dot(ops.Full_JW_Ops[i]).dot(current_ket).toarray()[0][0].real
             vector.append(-abs(comm)) 
             if abs(comm)>abs(grad):
+                if i in ansatz.indices and ops.repeats == 'False':
+                    continue
                 grad = comm
                 num = i 
+        if num == None:
+             print('Pool exhausted.')
+             break
         print('\nIteration '+str(len(parameters))+'.\n')
         '''
         print('Significant gradients:\n')

@@ -95,6 +95,7 @@ class Operator_Bank:
          self.inter = (kwargs.get('inter', None))
          self.active_doccs = (kwargs.get('occs', 'False'))
          self.soccs = (kwargs.get('soccs', 'False'))
+         self.repeats = (kwargs.get('repeats', 'True'))
          doccs = []
          if self.soccs == 'False':
              self.soccs = []
