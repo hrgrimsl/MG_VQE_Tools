@@ -19,6 +19,11 @@ def Optimize(molecule, ops, logging, **kwargs):
         outcome = VQE(molecule, parameters, ops, theta_tightness, logging)
     if algorithm == 'ADAPT':
         outcome = ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
+    if algorithm == 'GradSort':
+        parameters = []
+        for i in range(0, len(ops.Full_Ops)):
+            parameters.append(0)
+        outcome = GradSort(molecule, parameters, ops, theta_tightness, logging)
     if algorithm == 'ADAPT_End':
         outcome = ADAPT_End(molecule, ops, theta_tightness, ADAPT_tightness, logging)
     if algorithm == 'ADAPT_All':
@@ -54,6 +59,22 @@ def Callback(optimization):
 
 def VQE(molecule, parameters, ops, theta_tightness, logging):
     #Initialize parameters
+    print('Performing optimization of parameters...')
+    optimization = scipy.optimize.minimize(Trotter_SPE, parameters, jac = Trotter_Gradient, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False}, callback = Callback)
+    print(str(len(parameters))+' parameters optimized in '+str(optimization.nit)+' iterations!')
+    return optimization
+
+def GradSort(molecule, parameters, ops, theta_tightness, logging):
+    current_ket = ops.HF_ket
+    comms = []
+    hbra = ops.HF_ket.T.dot(ops.JW_hamiltonian)
+    for i in range(0, len(ops.Full_JW_Ops)):
+        comm = abs(2*hbra.dot(ops.Full_JW_Ops[i]).dot(current_ket).toarray()[0][0].real)
+        comms.append(comm)
+    idx = (np.argsort(comms))
+    comms = list(np.array(comms)[idx])
+    print(comms)
+    ops.Full_JW_Ops = list(np.array(ops.Full_JW_Ops)[idx])
     print('Performing optimization of parameters...')
     optimization = scipy.optimize.minimize(Trotter_SPE, parameters, jac = Trotter_Gradient, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False}, callback = Callback)
     print(str(len(parameters))+' parameters optimized in '+str(optimization.nit)+' iterations!')
