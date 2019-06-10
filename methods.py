@@ -478,6 +478,8 @@ def RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed):
             comm = 2*hbra.dot(ops.Full_JW_Ops[i]).dot(current_ket).toarray()[0][0].real
             vector.append(comm) 
             if num == i:
+                if i in ansatz.indices and ops.repeats == 'False':
+                    continue
                 grad = comm
         num = random.randint(0, len(ops.Full_Ops)-1)
         print('\nIteration '+str(len(parameters))+'.\n')
@@ -500,6 +502,7 @@ def RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed):
             continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
+        ansatz.indices.insert(0, num)
         parameters = list(parameters)
         parameters.insert(0, 0)
 
