@@ -17,8 +17,11 @@ def Optimize(molecule, ops, logging, **kwargs):
         for i in range(0, len(ops.Full_Ops)):
             parameters.append(0)
         outcome = VQE(molecule, parameters, ops, theta_tightness, logging)
-    if algorithm == 'ADAPT':
+    if algorithm == 'ADAPT' and ops.repeats == 'True':
         outcome = ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
+    if algorithm == 'ADAPT' and ops.repeats == 'False':
+        print('Doing sgo')
+        outcome = sGO(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile) 
     if algorithm == 'GradSort':
         parameters = []
         for i in range(0, len(ops.Full_Ops)):
@@ -123,8 +126,6 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
             comm = 2*hbra.dot(ops.Full_JW_Ops[i]).dot(current_ket).toarray()[0][0].real
             vector.append(-abs(comm)) 
             if abs(comm)>abs(grad):
-                if i in ansatz.indices and ops.repeats == 'False':
-                    continue
                 grad = comm
                 num = i 
         if num == None:
@@ -198,6 +199,66 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
 
     return OptRes
 
+def sGO(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
+    energy = ops.HF_ket.transpose().conj().dot(ops.JW_hamiltonian).dot(ops.HF_ket).toarray()[0][0].real
+    ansatz = Ansatz_Operations(ops)
+    if rfile!=None:
+        ansatz.read(str(rfile), ops)
+    current_ket = copy.copy(ops.HF_ket)
+    #parameters = ansatz.parameters
+    parameters = [random.random() for i in range(0, len(ansatz.parameters))]
+    scipy_hessians = [np.array([])]    
+    gradients = [None]
+    i_iter = 0
+    for iter in range(0, len(ops.Full_JW_Ops)):
+        grad = -1
+        num = None
+        hbra = current_ket.transpose().conj().dot(ops.JW_hamiltonian)
+        vector = []
+        for i in range(0, len(ops.Full_JW_Ops)):
+            comm = 2*hbra.dot(ops.Full_JW_Ops[i]).dot(current_ket).toarray()[0][0].real
+            vector.append(-abs(comm)) 
+            if abs(comm)>grad and i not in ansatz.indices:
+                grad = abs(comm)
+                num = i
+        print('\nIteration '+str(len(parameters))+'.\n')
+        gradients.append(scipy.linalg.norm(vector))
+        #ops, vector = Expand_Pool(molecule, ops, vector, ansatz)
+        print('Norm of all gradients: {:+10.14f}'.format(gradients[-1]))
+
+        #Comment this stuff out later
+        try:
+            logging.info(str(energy))
+        except:
+            pass
+        ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
+        ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
+        ansatz.indices.insert(0, num)
+
+        parameters = list(parameters)
+        parameters.insert(0, 0)
+        ansatz.parameters = list(parameters)
+        ansatz.dump(str(wfile))
+        parameters = [0 for i in parameters]
+        OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
+        parameters = OptRes.x
+
+        energy = OptRes.fun
+        scipy_hessians.append(np.linalg.pinv(OptRes.hess_inv))
+        current_ket = copy.copy(ops.HF_ket)
+        for i in reversed(range(0, len(parameters))):
+            current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 
+        try:
+            S2 = current_ket.transpose().conj().dot(ops.S2.dot(current_ket)).toarray()[0][0].real
+            print('ADAPT S^2 = '+str(S2))
+        except:
+            pass
+        print('Energy: {:+10.14f}'.format(energy))
+        
+
+        i_iter += 1
+    return OptRes
+        
 def HOPS(molecule, ops, theta_tightness, ADAPT_tightness, logging):
     energy = molecule.hf_energy
     ansatz = Ansatz_Operations(ops)
@@ -478,8 +539,6 @@ def RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed):
             comm = 2*hbra.dot(ops.Full_JW_Ops[i]).dot(current_ket).toarray()[0][0].real
             vector.append(comm) 
             if num == i:
-                if i in ansatz.indices and ops.repeats == 'False':
-                    continue
                 grad = comm
         num = random.randint(0, len(ops.Full_Ops)-1)
         print('\nIteration '+str(len(parameters))+'.\n')
@@ -496,16 +555,11 @@ def RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed):
         print('Next gradient: {:+10.14f}'.format(grad))
         gradients.append(scipy.linalg.norm(vector))
         print('Norm of all gradients: {:+10.14f}'.format(gradients[-1]))
-        if abs(gradients[-1])<ADAPT_tightness:
-            if len(gradients) == 2:
-                OptRes = scipy.optimize.OptimizeResult(x=(), fun = molecule.hf_energy, nit = 0)
-            continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
         ansatz.indices.insert(0, num)
         parameters = list(parameters)
         parameters.insert(0, 0)
-
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
         print('Newest full ansatz:\n')
@@ -522,8 +576,8 @@ def RADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, seed):
         current_ket = copy.copy(ops.HF_ket)
         for i in reversed(range(0, len(parameters))):
              current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 
-
         i_iter += 1
+    print(ops.Full_Ops)
     return OptRes
 
 def LADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
