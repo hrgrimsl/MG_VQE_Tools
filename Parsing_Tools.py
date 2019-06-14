@@ -58,8 +58,9 @@ def Get_Molecule(input_file):
         molecule.load()
         molecule.active = op_kwargs['active']
         molecule.occ = op_kwargs['occ']
-
         molecule.n_fdoccs = n_fdoccs
+
+        print(molecule.n_electrons)
         molecule.CASCI = molecule.fci_energy
         print('Loaded existing molecule.')    
         
@@ -70,6 +71,7 @@ def Get_Molecule(input_file):
         print(molecule.active)
 
         molecule = molecule.run_psi4()
+        molecule.n_electrons -= 2*n_fdoccs
     molecule.filename = psi_file
     molecule.save()
 

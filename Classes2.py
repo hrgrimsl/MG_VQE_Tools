@@ -104,7 +104,8 @@ class Operator_Bank:
              self.soccs = [int(s) for s in self.soccs.split(',')]
                 
          self.molecule = molecule
-
+         print(molecule.n_electrons)
+         print(molecule.n_orbitals)
          if self.active == 'False':
 
              occupation = []
@@ -139,7 +140,7 @@ class Operator_Bank:
          self.two_index_hamiltonian = self.hamiltonian.one_body_tensor
          self.four_index_hamiltonian = self.hamiltonian.two_body_tensor
          self.JW_hamiltonian = openfermion.transforms.get_sparse_operator(self.hamiltonian)         
-
+         print(doccs)
          #Construct spaces
          self.aoccs = [i for i in range(0, self.molecule.n_electrons) if i%2 == 0 and i>=2*int(self.ecp)]
          self.anoccs = [i for i in range(self.molecule.n_electrons, self.molecule.n_orbitals*2) if i%2 == 0]
@@ -207,6 +208,8 @@ class Operator_Bank:
 
          if self.inter!=None:
               random.seed(int(self.inter))
+
+
               c = list(zip(self.Full_SQ_Ops, self.Full_Ops))
               random.shuffle(c)
               self.Full_SQ_Ops, self.Full_Ops = zip(*c)

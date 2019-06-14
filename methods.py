@@ -63,8 +63,10 @@ def Callback(optimization):
 def VQE(molecule, parameters, ops, theta_tightness, logging):
     #Initialize parameters
     print('Performing optimization of parameters...')
-    optimization = scipy.optimize.minimize(Trotter_SPE, parameters, jac = Trotter_Gradient, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False}, callback = Callback)
+    o = optimization = scipy.optimize.minimize(Trotter_SPE, parameters, jac = Trotter_Gradient, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False}, callback = Callback)
     print(str(len(parameters))+' parameters optimized in '+str(optimization.nit)+' iterations!')
+    print(ops.Full_Ops)
+    print(o.x)
     return optimization
 
 def GradSort(molecule, parameters, ops, theta_tightness, logging):
@@ -222,6 +224,11 @@ def sGO(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
                 grad = abs(comm)
                 num = i
         print('\nIteration '+str(len(parameters))+'.\n')
+        try:
+            print('Next operation: {:10s}'.format(str(ops.Full_Ops[num])))
+            print('Next gradient: {:+10.14f}'.format(grad))
+        except:
+            pass
         gradients.append(scipy.linalg.norm(vector))
         #ops, vector = Expand_Pool(molecule, ops, vector, ansatz)
         print('Norm of all gradients: {:+10.14f}'.format(gradients[-1]))
@@ -234,7 +241,6 @@ def sGO(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
         ansatz.indices.insert(0, num)
-
         parameters = list(parameters)
         parameters.insert(0, 0)
         ansatz.parameters = list(parameters)
