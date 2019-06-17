@@ -107,9 +107,7 @@ class Operator_Bank:
          print(molecule.n_electrons)
          print(molecule.n_orbitals)
          if self.active == 'False':
-
              occupation = []
-
              active_indices = [i for i in range(0, molecule.n_orbitals)]
              unpaired = molecule.multiplicity-1
              occs = [i for i in range(0, int(((molecule.n_electrons-unpaired)/2)))]
@@ -127,8 +125,6 @@ class Operator_Bank:
              except: 
                  pass
 
-
-
          doccs = [i for i in range(0, self.molecule.n_fdoccs)]
          if self.molecule.active!=None:
              active = [i for i in range(len(doccs), len(doccs)+len(self.molecule.active))]
@@ -140,7 +136,6 @@ class Operator_Bank:
          self.two_index_hamiltonian = self.hamiltonian.one_body_tensor
          self.four_index_hamiltonian = self.hamiltonian.two_body_tensor
          self.JW_hamiltonian = openfermion.transforms.get_sparse_operator(self.hamiltonian)         
-         print(doccs)
          #Construct spaces
          self.aoccs = [i for i in range(0, self.molecule.n_electrons) if i%2 == 0 and i>=2*int(self.ecp)]
          self.anoccs = [i for i in range(self.molecule.n_electrons, self.molecule.n_orbitals*2) if i%2 == 0]
@@ -153,8 +148,10 @@ class Operator_Bank:
 
          spinorbitals = self.molecule.n_electrons-2*self.molecule.n_fdoccs
          soccs = int(self.molecule.multiplicity-1)
+         print(self.molecule.n_electrons)
          try:
-             doccs = int(((molecule.n_electrons-2*self.molecule.n_fdoccs)-soccs)/2)
+             doccs = int((self.molecule.n_electrons-soccs)/2)
+             print(doccs)
          except:
              doccs = int((self.molecule.n_electrons-soccs)/2)
          for i in range(0, doccs):
@@ -166,6 +163,8 @@ class Operator_Bank:
          if self.molecule.occ!='None' and self.molecule.occ!=None:
              occ = self.molecule.occ
          print('Electron configuration: '+str(occ))
+         print(molecule.n_qubits)
+         print(occ)
          self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(occ, molecule.n_qubits)).transpose()
          try:
              print((self.HF_ket.transpose().dot(self.S2).dot(self.HF_ket)).toarray()[0][0].real)
@@ -199,7 +198,7 @@ class Operator_Bank:
              if self.spin_adapt == 'False':
                  self.IJAB() 
              else:
-                 if self.molecule.multiplicity == 1:
+                 #if self.molecule.multiplicity == 1:
                      self.SD_Singlet()
 
          self.Full_Ops = self.Singles+self.Doubles
@@ -211,9 +210,9 @@ class Operator_Bank:
 
 
               c = list(zip(self.Full_SQ_Ops, self.Full_Ops))
+
               random.shuffle(c)
-              self.Full_SQ_Ops, self.Full_Ops = zip(*c)
-         
+              self.Full_SQ_Ops, self.Full_Ops = zip(*c)         
          for op in self.Full_SQ_Ops:
              op = openfermion.normal_ordered(op)
              if op.many_body_order()>0:
