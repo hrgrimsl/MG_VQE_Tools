@@ -653,6 +653,16 @@ def UCC(molecule, ops, theta_tightness, logging):
     for i in range(0, len(ops.Full_Ops)):
         parameters.append(0)
     optimization = scipy.optimize.minimize(UCC_SPE, parameters, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False})
+    ket = ops.HF_ket
+    sum = ops.Full_JW_Ops[0]*optimization.x[0]
+    for i in range(1, len(ops.Full_JW_Ops)):
+        sum+=ops.Full_JW_Ops[i]*optimization.x[i]
+    ket = scipy.sparse.linalg.expm_multiply(sum, ket)
+    print(ket.transpose().dot(ops.S2).dot(ket))
+    print(optimization.x)
+    print(ops.Full_Ops)
+    print(ket)
+    print(ket.transpose().dot(ket))
     return optimization
 
 def Force(molecule, ops, theta_tightness, ADAPT_tightness, logging):

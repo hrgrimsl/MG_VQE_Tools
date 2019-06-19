@@ -1,20 +1,20 @@
 basis sto-3g
-multiplicity 1
+multiplicity 3
 psi_file scratcholi
 charge 0
-
+output akfj
 atom H 0 0 0
 atom H 0 0 1
-atom H 0 0 2
+atom H .5 0 2
 atom H 0 0 3
 
 loc False
 
-op_kwarg include_pqrs True
+op_kwarg include_pqrs False
 op_kwarg spin_adapt True
-op_kwarg active 0,2,3
-op_kwarg occs 0
-method_kwarg algorithm ADAPT
-method_kwarg theta_tightness 1e-13
-method_kwarg ADAPT_tightness 1e-3
 
+
+method_kwarg algorithm UCC
+method_kwarg theta_tightness 1e-5
+method_kwarg ADAPT_tightness 1e-3
+n_fdoccs 0
