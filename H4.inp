@@ -14,7 +14,7 @@ op_kwarg include_pqrs False
 op_kwarg spin_adapt True
 
 
-method_kwarg algorithm UCC
+method_kwarg algorithm ADAPT
 method_kwarg theta_tightness 1e-5
 method_kwarg ADAPT_tightness 1e-3
 n_fdoccs 0

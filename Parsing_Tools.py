@@ -60,7 +60,7 @@ def Get_Molecule(input_file):
         molecule.occ = op_kwargs['occ']
         molecule.n_fdoccs = n_fdoccs
 
-        print(molecule.n_electrons)
+
         molecule.CASCI = molecule.fci_energy
         print('Loaded existing molecule.')    
         

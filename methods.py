@@ -20,7 +20,7 @@ def Optimize(molecule, ops, logging, **kwargs):
     if algorithm == 'ADAPT' and ops.repeats == 'True':
         outcome = ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
     if algorithm == 'ADAPT' and ops.repeats == 'False':
-        print('Doing sgo')
+
         outcome = sGO(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile) 
     if algorithm == 'GradSort':
         parameters = []
@@ -52,7 +52,7 @@ def Optimize(molecule, ops, logging, **kwargs):
         h = ops.JW_hamiltonian
         e,v = np.linalg.eig(h.toarray())
         wfile.write(str(e)+'\n')
-        print(str(e))
+
         exit()
     return outcome
 
@@ -65,8 +65,7 @@ def VQE(molecule, parameters, ops, theta_tightness, logging):
     print('Performing optimization of parameters...')
     o = optimization = scipy.optimize.minimize(Trotter_SPE, parameters, jac = Trotter_Gradient, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False}, callback = Callback)
     print(str(len(parameters))+' parameters optimized in '+str(optimization.nit)+' iterations!')
-    print(ops.Full_Ops)
-    print(o.x)
+
     return optimization
 
 def GradSort(molecule, parameters, ops, theta_tightness, logging):
@@ -78,7 +77,7 @@ def GradSort(molecule, parameters, ops, theta_tightness, logging):
         comms.append(comm)
     idx = (np.argsort(comms))
     comms = list(np.array(comms)[idx])
-    print(comms)
+
     ops.Full_JW_Ops = list(np.array(ops.Full_JW_Ops)[idx])
     print('Performing optimization of parameters...')
     optimization = scipy.optimize.minimize(Trotter_SPE, parameters, jac = Trotter_Gradient, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False}, callback = Callback)
@@ -106,7 +105,7 @@ def Expand_Pool(molecule, ops, vector, ansatz):
             if scipy.sparse.linalg.norm(new_op)>=1e-8:
                 ops.Full_JW_Ops.append(new_op)
                 ops.Full_Ops.append(ops.Full_Ops[i]+ops.Full_Ops[j])
-                print(ops.Full_Ops[-1])
+
     return ops, vector
 
 def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
@@ -149,7 +148,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
             pass
         gradients.append(scipy.linalg.norm(vector))
         #ops, vector = Expand_Pool(molecule, ops, vector, ansatz)
-        print('Norm of all gradients: {:+10.14f}'.format(gradients[-1]))
+
 
         #Comment this stuff out later
         try:
@@ -190,7 +189,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
             current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 
         try:
             S2 = current_ket.transpose().conj().dot(ops.S2.dot(current_ket)).toarray()[0][0].real
-            print('ADAPT S^2 = '+str(S2))
+            print('Current S^2 = '+str(S2))
         except:
             pass
         print('Energy: {:+10.14f}'.format(energy))
@@ -207,8 +206,7 @@ def sGO(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
     if rfile!=None:
         ansatz.read(str(rfile), ops)
     current_ket = copy.copy(ops.HF_ket)
-    #parameters = ansatz.parameters
-    parameters = [random.random() for i in range(0, len(ansatz.parameters))]
+    parameters = ansatz.parameters
     scipy_hessians = [np.array([])]    
     gradients = [None]
     i_iter = 0
@@ -256,7 +254,7 @@ def sGO(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
             current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 
         try:
             S2 = current_ket.transpose().conj().dot(ops.S2.dot(current_ket)).toarray()[0][0].real
-            print('ADAPT S^2 = '+str(S2))
+            print('Current S^2 = '+str(S2))
         except:
             pass
         print('Energy: {:+10.14f}'.format(energy))

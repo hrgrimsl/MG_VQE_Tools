@@ -104,8 +104,7 @@ class Operator_Bank:
              self.soccs = [int(s) for s in self.soccs.split(',')]
                 
          self.molecule = molecule
-         print(molecule.n_electrons)
-         print(molecule.n_orbitals)
+
          if self.active == 'False':
              occupation = []
              active_indices = [i for i in range(0, molecule.n_orbitals)]
@@ -151,10 +150,10 @@ class Operator_Bank:
 
          spinorbitals = self.molecule.n_electrons-2*self.molecule.n_fdoccs
          soccs = int(self.molecule.multiplicity-1)
-         print(self.molecule.n_electrons)
+
          try:
              doccs = int((self.molecule.n_electrons-soccs)/2)
-             print(doccs)
+
          except:
              doccs = int((self.molecule.n_electrons-soccs)/2)
          for i in range(0, doccs):
@@ -166,14 +165,10 @@ class Operator_Bank:
          if self.molecule.occ!='None' and self.molecule.occ!=None:
              occ = self.molecule.occ
          print('Electron configuration: '+str(occ))
-         print(molecule.n_qubits)
-         print(occ)
+
+
          self.HF_ket = scipy.sparse.csc_matrix(openfermion.jw_configuration_state(occ, molecule.n_qubits)).transpose()
-         try:
-             print((self.HF_ket.transpose().dot(self.S2).dot(self.HF_ket)).toarray()[0][0].real)
-         except:
-             pass
-         print("\n"*2)
+         
          #Parse kwargs
 
          self.include_pqrs = kwargs.get('include_pqrs', 'False')
@@ -446,8 +441,7 @@ class Operator_Bank:
                 two_elec4-= openfermion.hermitian_conjugated(two_elec4)
                 two_elec5-= openfermion.hermitian_conjugated(two_elec5)
                 two_elec6-= openfermion.hermitian_conjugated(two_elec6)
-                print('term:'+str(two_elec3))
-                print('complement:'+str(two_elec4))
+
                 
 
                 #print(openfermion.normal_ordered(two_elec*two_elec3-two_elec3*two_elec))
@@ -458,12 +452,12 @@ class Operator_Bank:
                 #print(openfermion.normal_ordered(two_elec2*two_elec4-two_elec4*two_elec2))
                 #print(openfermion.normal_ordered(two_elec2*two_elec5-two_elec5*two_elec2))
                 #print(openfermion.normal_ordered(two_elec2*two_elec6-two_elec6*two_elec2))
-                print(openfermion.normal_ordered(two_elec3*two_elec4-two_elec4*two_elec3))
+                #print(openfermion.normal_ordered(two_elec3*two_elec4-two_elec4*two_elec3))
                 #print(openfermion.normal_ordered(two_elec3*two_elec5-two_elec5*two_elec3))
                 #print(openfermion.normal_ordered(two_elec3*two_elec6-two_elec6*two_elec3))
                 #print(openfermion.normal_ordered(two_elec4*two_elec5-two_elec5*two_elec4))
                 #print(openfermion.normal_ordered(two_elec4*two_elec6-two_elec6*two_elec4))
-                print(openfermion.normal_ordered(two_elec5*two_elec6-two_elec6*two_elec5))
+                #print(openfermion.normal_ordered(two_elec5*two_elec6-two_elec6*two_elec5))
                 for term in two_elec.terms:
                     norm += two_elec.terms[term]*two_elec.terms[term]
                 if two_elec.many_body_order()>0 and norm!=0:

@@ -101,7 +101,7 @@ def Predict_dE(molecule, ops, theta_tightness, ADAPT_tightness, logging, ansatz,
         grad2.append([i])
     gradient = np.array(grad2)
     u, s, v = np.linalg.svd(hessian, full_matrices=True, compute_uv=True)
-    print(s) 
+
     S = []
     for i in list(s):
         if abs(i)>=Singular_threshold:
