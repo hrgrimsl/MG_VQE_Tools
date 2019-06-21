@@ -93,6 +93,7 @@ class Operator_Bank:
          self.active = (kwargs.get('active', 'False'))
          self.intra = (kwargs.get('intra', None))
          self.inter = (kwargs.get('inter', None))
+         self.flip = (kwargs.get('flip',None))
          self.active_doccs = (kwargs.get('occs', 'False'))
          self.soccs = (kwargs.get('soccs', 'False'))
          self.repeats = (kwargs.get('repeats', 'True'))
@@ -200,8 +201,10 @@ class Operator_Bank:
                      self.SD_Singlet()
                  else:
                      self.SD_Triplet()
-         self.Full_Ops = self.Singles+self.Doubles
-
+         if self.flip == 'False':
+             self.Full_Ops = self.Singles+self.Doubles
+         else:
+             self.Full_Ops = self.Doubles+self.Singles
          self.Full_SQ_Ops = self.SQ_Singles+self.SQ_Doubles
 
          if self.inter!=None:
