@@ -176,6 +176,7 @@ class Operator_Bank:
          self.screen_commutators = kwargs.get('screen_commutators', 'False')
          self.sort = kwargs.get('sort', None)
          self.spin_adapt = kwargs.get('spin_adapt', 'False')
+         self.gs = kwargs.get('gs', 'False')
  
          #Initialize op list
          self.SQ_Singles = []
@@ -183,9 +184,11 @@ class Operator_Bank:
          self.Singles = []
          self.Doubles = []
          self.Full_JW_Ops = []
-
-
-         if self.include_pqrs == 'True':
+         
+         if self.gs == 'True':
+             self.GS()
+                              
+         elif self.include_pqrs == 'True':
              if self.spin_adapt == 'False':
                  self.PQRS()
              else:
@@ -201,11 +204,7 @@ class Operator_Bank:
                      self.SD_Singlet()
                  else:
                      self.SD_Triplet()
-         if self.flip == 'False':
-             self.Full_Ops = self.Singles+self.Doubles
-         else:
-             self.Full_Ops = self.Doubles+self.Singles
-         self.Full_SQ_Ops = self.SQ_Singles+self.SQ_Doubles
+
 
          if self.inter!=None:
               random.seed(int(self.inter))
@@ -215,6 +214,11 @@ class Operator_Bank:
 
               random.shuffle(c)
               self.Full_SQ_Ops, self.Full_Ops = zip(*c)         
+         if self.flip == 'False':
+             self.Full_Ops = self.Singles+self.Doubles
+         else:
+             self.Full_Ops = self.Doubles+self.Singles
+             self.Full_SQ_Ops = self.SQ_Doubles+self.SQ_Singles
          for op in self.Full_SQ_Ops:
              op = openfermion.normal_ordered(op)
              if op.many_body_order()>0:
@@ -347,7 +351,23 @@ class Operator_Bank:
                              self.SQ_Doubles.append(two_elec/np.sqrt(norm))
                              self.Doubles.append([j,j,i,i])
                    
-    
+    def GS(self):
+        #Singles
+        for i in range(int(self.ecp), self.molecule.n_orbitals):
+            for a in range(i+1, self.molecule.n_orbitals):
+                one_elec = (1/np.sqrt(2))*openfermion.FermionOperator(((2*a-2*self.ecp,1),(2*i-2*self.ecp,0)))
+                one_elec += (1/np.sqrt(2))*openfermion.FermionOperator(((2*a+1-2*self.ecp,1),(2*i+1-2*self.ecp,0)))
+                one_elec -= openfermion.hermitian_conjugated(one_elec)
+                one_elec = openfermion.normal_ordered(one_elec)
+                norm = 0
+                for term in one_elec.terms:
+                    norm += one_elec.terms[term]*one_elec.terms[term]
+                if one_elec.many_body_order()>0 and norm!=0:
+                    self.SQ_Singles.append(one_elec/np.sqrt(norm))
+                    self.Singles.append([a-self.ecp,i-self.ecp])               
+         
+        
+
     def GSD_Triplet(self):
         #Singles
         for i in range(int(self.ecp), self.molecule.n_orbitals):
@@ -555,7 +575,7 @@ class Operator_Bank:
                      self.Singles.append([a-self.ecp,i-self.ecp])               
          
          if self.intra!=None:
-              random.seed(int(intra))
+              random.seed(int(self.intra))
               c = list(zip(self.SQ_Singles, self.Singles))
               random.shuffle(c)
               self.SQ_Singles, self.Singles = zip(*c)
