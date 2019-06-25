@@ -243,7 +243,7 @@ def sGO(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
         parameters.insert(0, 0)
         ansatz.parameters = list(parameters)
         ansatz.dump(str(wfile))
-        parameters = [0 for i in parameters]
+
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
 

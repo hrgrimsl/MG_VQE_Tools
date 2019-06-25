@@ -206,19 +206,17 @@ class Operator_Bank:
                      self.SD_Triplet()
 
 
-         if self.inter!=None:
-              random.seed(int(self.inter))
 
-
-              c = list(zip(self.Full_SQ_Ops, self.Full_Ops))
-
-              random.shuffle(c)
-              self.Full_SQ_Ops, self.Full_Ops = zip(*c)         
          if self.flip == 'False':
              self.Full_Ops = self.Singles+self.Doubles
          else:
              self.Full_Ops = self.Doubles+self.Singles
              self.Full_SQ_Ops = self.SQ_Doubles+self.SQ_Singles
+         if self.inter!=None:
+              random.seed(int(self.inter))
+              c = list(zip(self.Full_SQ_Ops, self.Full_Ops))
+              random.shuffle(c)
+              self.Full_SQ_Ops, self.Full_Ops = zip(*c)         
          for op in self.Full_SQ_Ops:
              op = openfermion.normal_ordered(op)
              if op.many_body_order()>0:
@@ -337,7 +335,7 @@ class Operator_Bank:
                         self.SQ_Doubles.append(two_elec/np.sqrt(norm))
                         self.Doubles.append([a,b,i,j])
 
-        if self.kup == 'True':
+        else:
              pairs = []
              for j in range(0, self.molecule.n_orbitals):
                  for i in range(j, self.molecule.n_orbitals):
