@@ -93,7 +93,8 @@ class Operator_Bank:
          self.active = (kwargs.get('active', 'False'))
          self.intra = (kwargs.get('intra', None))
          self.inter = (kwargs.get('inter', None))
-         self.flip = (kwargs.get('flip',None))
+         self.flip = (kwargs.get('flip','False'))
+         
          self.active_doccs = (kwargs.get('occs', 'False'))
          self.soccs = (kwargs.get('soccs', 'False'))
          self.repeats = (kwargs.get('repeats', 'True'))
@@ -617,7 +618,7 @@ class Operator_Bank:
                               self.Doubles.append([a-self.ecp,b-self.ecp,i-self.ecp,j-self.ecp])
 
          if self.intra!=None:
-              random.seed(int(intra))
+              random.seed(int(self.intra))
               c = list(zip(self.SQ_Doubles, self.Doubles))
               random.shuffle(c)
               self.SQ_Doubles, self.Doubles = zip(*c)
@@ -643,7 +644,7 @@ class Operator_Bank:
                      self.Singles.append([a-self.ecp,i-self.ecp])               
          
          if self.intra!=None:
-              random.seed(int(intra))
+              random.seed(int(self.intra))
               c = list(zip(self.SQ_Singles, self.Singles))
               random.shuffle(c)
               self.SQ_Singles, self.Singles = zip(*c)
@@ -685,7 +686,7 @@ class Operator_Bank:
                               self.Doubles.append([a-self.ecp,b-self.ecp,i-self.ecp,j-self.ecp])
 
          if self.intra!=None:
-              random.seed(int(intra))
+              random.seed(int(self.intra))
               c = list(zip(self.SQ_Doubles, self.Doubles))
               random.shuffle(c)
               self.SQ_Doubles, self.Doubles = zip(*c)
