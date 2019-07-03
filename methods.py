@@ -27,8 +27,10 @@ def Optimize(molecule, ops, logging, **kwargs):
         for i in range(0, len(ops.Full_Ops)):
             parameters.append(0)
         outcome = GradSort(molecule, parameters, ops, theta_tightness, logging)
-    if algorithm == 'ADAPT_End':
-        outcome = ADAPT_End(molecule, ops, theta_tightness, ADAPT_tightness, logging)
+    if algorithm == 'ROANOKE':
+        outcome = ADAPT_Minimize(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
+    if algorithm == 'FOLD':
+        outcome = FOLD(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
     if algorithm == 'ADAPT_All':
         outcome = ADAPT_All(molecule, ops, theta_tightness, ADAPT_tightness, logging)
     if algorithm == 'UCC':
@@ -193,12 +195,183 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         except:
             pass
         print('Energy: {:+10.14f}'.format(energy))
-        
 
         i_iter += 1
-        
-
+    print(ansatz.Full_Ops)
     return OptRes
+
+def FOLD(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
+    energy = ops.HF_ket.transpose().conj().dot(ops.JW_hamiltonian).dot(ops.HF_ket).toarray()[0][0].real
+    ansatz = Ansatz_Operations(ops)
+    ansatz.Full_JW_Ops = []
+    ansatz.Full_Ops = []
+    ansatz.indices = []
+    if rfile!=None:
+        ansatz.read(str(rfile), ops)
+    current_ket = copy.copy(ops.HF_ket)
+    parameters = ansatz.parameters
+    scipy_hessians = [np.array([])]    
+    gradients = [None, None]
+    molecule1 = copy.copy(molecule)
+    i_iter = 0
+    energy = 0
+    while gradients[-2] == None or abs(gradients[-1]-gradients[-2])>ADAPT_tightness:
+        grad = energy
+        num = None
+        hbra = current_ket.transpose().conj().dot(ops.JW_hamiltonian)
+        vector = []
+        for i in range(0, len(ops.Full_JW_Ops)):
+            ansatz1 = copy.copy(ansatz)
+            ansatz1.HF_ket = copy.copy(ops.HF_ket)
+            ansatz1.Full_JW_Ops.insert(0, ops.Full_JW_Ops[i])
+            ansatz1.Full_Ops.insert(0, ops.Full_Ops[i])
+            ansatz1.indices.insert(0, i)             
+            logging.getLogger().setLevel(logging.CRITICAL)
+
+            params = list(copy.copy(parameters))
+            params.insert(0,0)
+            OptRes = VQE(molecule, params, ansatz1, 1e-3, logging)
+            params.pop(0)
+            ansatz1.Full_JW_Ops.pop(0) 
+            ansatz1.Full_Ops.pop(0) 
+            ansatz1.indices.pop(0) 
+            logging.getLogger().setLevel(logging.INFO)
+            comm = OptRes.fun
+            vector.append(-abs(comm))
+
+            if comm<grad:
+                print(comm)
+                grad = comm
+                num = i
+                params = OptRes.x
+        print(grad)
+        print('--------')
+        if num==None:
+            print('Zero gradients')
+            break
+
+
+        print('\nIteration '+str(len(parameters))+'.\n')
+        try:
+            print('Next operation: {:10s}'.format(str(ops.Full_Ops[num])))
+            print('Next energy: {:+10.14f}'.format(grad))
+        except:
+            pass
+        gradients.append(scipy.linalg.norm(vector))
+        #Comment this stuff out later
+        ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
+        ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
+        ansatz.indices.insert(0, num)        
+        parameters = list(parameters)
+        parameters.insert(0, random.random())
+        ansatz.parameters = list(parameters)
+        #ansatz.dump(str(wfile))
+        OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
+        parameters = OptRes.x  
+        energy = OptRes.fun
+        logging.info(str(energy))
+        scipy_hessians.append(np.linalg.pinv(OptRes.hess_inv))
+        current_ket = copy.copy(ops.HF_ket)
+        print(len(parameters))
+        print(len(ansatz.Full_JW_Ops))
+        for i in reversed(range(0, len(parameters))):
+            current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 
+        
+        try:
+            S2 = current_ket.transpose().conj().dot(ops.S2.dot(current_ket)).toarray()[0][0].real
+            print('Current S^2 = '+str(S2))
+        except:
+            pass
+        print('Energy: {:+10.14f}'.format(energy))
+        i_iter += 1
+        print(ansatz.Full_Ops)
+    return OptRes
+
+def ADAPT_Minimize(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
+    energy = ops.HF_ket.transpose().conj().dot(ops.JW_hamiltonian).dot(ops.HF_ket).toarray()[0][0].real
+    ansatz = Ansatz_Operations(ops)
+    ansatz.Full_JW_Ops = []
+    ansatz.Full_Ops = []
+    ansatz.indices = []
+    if rfile!=None:
+        ansatz.read(str(rfile), ops)
+    current_ket = copy.copy(ops.HF_ket)
+    parameters = ansatz.parameters
+    scipy_hessians = [np.array([])]    
+    gradients = [None, None]
+    molecule1 = copy.copy(molecule)
+    i_iter = 0
+    energy = 0
+    while gradients[-2] == None or abs(gradients[-1]-gradients[-2])>ADAPT_tightness:
+        grad = energy
+        num = None
+        hbra = current_ket.transpose().conj().dot(ops.JW_hamiltonian)
+        vector = []
+
+        for i in range(0, len(ops.Full_JW_Ops)):
+            ansatz1 = copy.copy(ansatz)
+            ansatz1.Full_JW_Ops = []
+            ansatz1.Full_Ops = []
+            ansatz1.parameters = []
+            ansatz1.HF_ket = copy.copy(current_ket)
+            ansatz1.Full_JW_Ops.insert(0, ops.Full_JW_Ops[i])
+            ansatz1.Full_Ops.insert(0, ops.Full_Ops[i])
+            ansatz1.indices.insert(0, i)             
+            logging.getLogger().setLevel(logging.CRITICAL)
+            OptRes = VQE(molecule, [0], ansatz1, 1e-3, logging)
+            ansatz1.Full_JW_Ops.pop(0)
+            ansatz1.Full_Ops.pop(0)
+            ansatz1.indices.pop(0)
+            logging.getLogger().setLevel(logging.INFO)
+            comm = OptRes.fun
+            vector.append(-abs(comm)) 
+            if comm<grad:
+                grad = comm
+                num = i
+                nextparam = OptRes.x[0]
+        print(grad)
+        print('--------')
+        if num==None:
+            print('Zero gradients')
+            break
+
+
+        print('\nIteration '+str(len(parameters))+'.\n')
+        try:
+            print('Next operation: {:10s}'.format(str(ops.Full_Ops[num])))
+            print('Next energy: {:+10.14f}'.format(grad))
+        except:
+            pass
+        gradients.append(scipy.linalg.norm(vector))
+        #Comment this stuff out later
+        ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
+        ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
+        ansatz.indices.insert(0, num)        
+        parameters = list(parameters)
+        parameters.insert(0, random.random())
+        ansatz.parameters = list(parameters)
+        #ansatz.dump(str(wfile))
+        OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
+        parameters = OptRes.x  
+        energy = OptRes.fun
+        logging.info(str(energy))
+        scipy_hessians.append(np.linalg.pinv(OptRes.hess_inv))
+        current_ket = copy.copy(ops.HF_ket)
+        print(len(parameters))
+        print(len(ansatz.Full_JW_Ops))
+        for i in reversed(range(0, len(parameters))):
+            current_ket = scipy.sparse.linalg.expm_multiply(parameters[i]*ansatz.Full_JW_Ops[i], current_ket) 
+        
+        try:
+            S2 = current_ket.transpose().conj().dot(ops.S2.dot(current_ket)).toarray()[0][0].real
+            print('Current S^2 = '+str(S2))
+        except:
+            pass
+        print('Energy: {:+10.14f}'.format(energy))
+        i_iter += 1
+        print(ansatz.Full_Ops)
+    return OptRes
+
 
 def sGO(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
     energy = ops.HF_ket.transpose().conj().dot(ops.JW_hamiltonian).dot(ops.HF_ket).toarray()[0][0].real
