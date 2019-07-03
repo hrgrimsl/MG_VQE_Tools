@@ -615,7 +615,7 @@ class Operator_Bank:
                               self.Doubles.append([a-self.ecp,b-self.ecp,i-self.ecp,j-self.ecp])
 
          if self.intra!=None:
-              random.seed(int(intra))
+              random.seed(int(self.intra))
               c = list(zip(self.SQ_Doubles, self.Doubles))
               random.shuffle(c)
               self.SQ_Doubles, self.Doubles = zip(*c)
