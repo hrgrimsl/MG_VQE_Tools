@@ -49,6 +49,11 @@ def Optimize(molecule, ops, logging, **kwargs):
         outcome = HOPS(molecule, ops, theta_tightness, ADAPT_tightness, logging)
     if algorithm == 'VarStep':
         outcome = VarStep(molecule, ops, theta_tightness, ADAPT_tightness, logging)
+
+    if algorithm == 'STARLIGHT':
+        energy = STARLIGHT(molecule, ops, theta_tightness, logging)
+        logging.info('Optimized energy: '+str(energy))
+        exit()
     if algorithm == 'CASCI':
         wfile = open('CASCI.out', 'a')
         h = ops.JW_hamiltonian
@@ -62,6 +67,61 @@ def Optimize(molecule, ops, logging, **kwargs):
 def Callback(optimization):
     print('...')
 
+
+
+def STARLIGHT(molecule, ops, theta_tightness, logging):
+    current_ket = ops.HF_ket
+    comms = []
+    hbra = ops.HF_ket.T.dot(ops.JW_hamiltonian)
+    for i in range(0, len(ops.Full_JW_Ops)):
+        comm = 2*abs(hbra.dot(ops.Full_JW_Ops[i]).dot(current_ket).toarray()[0][0].real)
+        comms.append(comm)
+    idx = (np.argsort(comms))
+    comms = list(np.array(comms)[idx])
+
+    ops.Full_JW_Ops = list(np.array(ops.Full_JW_Ops)[idx])
+
+    HF_ket = copy.copy(ops.HF_ket)
+    hbra = HF_ket.transpose().dot(ops.JW_hamiltonian)
+    energies = []
+    parameters = []
+    gradient = []
+    hessian = []
+    oporder = []
+    hessprime = []   
+    H = ops.JW_hamiltonian
+    for i in range(0,len(ops.Full_JW_Ops)):
+        A = copy.copy(ops.Full_JW_Ops[i])
+        Aket = A @ HF_ket
+        grad = 2*hbra.dot(Aket).toarray()[0][0].real
+        gradient.append(grad)
+        hessian.append([])
+        for j in range(0, len(ops.Full_JW_Ops)):
+            B = copy.copy(ops.Full_JW_Ops[j])
+            hess = 2*HF_ket.T.dot(B.dot(A).dot(H)-B.dot(H).dot(A)).dot(HF_ket).toarray()[0][0].real
+            hessian[-1].append(hess)
+    gradient = np.array(gradient)
+    hessian = np.array(hessian)
+    print(gradient)
+    print(hessian)
+    hinv = np.linalg.pinv(hessian)
+    dE = -.5*(gradient.T).dot(hinv).dot(gradient)
+
+    #dE = 2*gradient.T.dot(hterms).dot(hessian.dot(hterms)-np.identity(len(gradient))).dot(gradient)
+    energy = molecule.hf_energy+dE
+    print('Starlight Energy: %12.8f eH'%(energy))
+    print('HF Energy: %12.8f eH'%(molecule.hf_energy))
+    print('MP2 Energy: %12.8f eH'%(molecule.mp2_energy))
+    print('CCSD Energy: %12.8f eH'%(molecule.ccsd_energy))
+    print('CI Energy: %12.8f eH'%(molecule.fci_energy))
+    print('Starlight Error: %12.8f eH'%(energy-molecule.fci_energy))
+    print('HF Error: %12.8f eH'%(molecule.hf_energy-molecule.fci_energy))
+    print('MP2 Error: %12.8f eH'%(molecule.mp2_energy-molecule.fci_energy))
+    print('CCSD Error: %12.8f eH'%(molecule.ccsd_energy-molecule.fci_energy))
+
+
+    return energy
+        
 def VQE(molecule, parameters, ops, theta_tightness, logging):
     #Initialize parameters
     print('Performing optimization of parameters...')
@@ -79,7 +139,6 @@ def GradSort(molecule, parameters, ops, theta_tightness, logging):
         comms.append(comm)
     idx = (np.argsort(comms))
     comms = list(np.array(comms)[idx])
-
     ops.Full_JW_Ops = list(np.array(ops.Full_JW_Ops)[idx])
     print('Performing optimization of parameters...')
     optimization = scipy.optimize.minimize(Trotter_SPE, parameters, jac = Trotter_Gradient, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False}, callback = Callback)
@@ -171,6 +230,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         ansatz.dump(str(wfile))
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
+
         '''
         print('Newest full ansatz:\n')
         for term in range(0, len(ansatz.Full_Ops)):
@@ -184,7 +244,9 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         print('\n')   
         '''     
         energy = OptRes.fun
-        
+
+
+
         scipy_hessians.append(np.linalg.pinv(OptRes.hess_inv))
         current_ket = copy.copy(ops.HF_ket)
         for i in reversed(range(0, len(parameters))):
@@ -195,9 +257,10 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         except:
             pass
         print('Energy: {:+10.14f}'.format(energy))
-
         i_iter += 1
     print(ansatz.Full_Ops)
+
+
     return OptRes
 
 def FOLD(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
