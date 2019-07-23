@@ -70,17 +70,20 @@ def Callback(optimization):
 
 
 def STARLIGHT(molecule, ops, theta_tightness, logging):
+    ansatz1 = Ansatz_Operations(ops)
+    parameters = []
+    print('Numerical Hessian:')
+    print(Numerical_Hessian(ansatz1, ops, molecule, parameters, []))
     current_ket = ops.HF_ket
     comms = []
     hbra = ops.HF_ket.T.dot(ops.JW_hamiltonian)
     for i in range(0, len(ops.Full_JW_Ops)):
-        comm = 2*abs(hbra.dot(ops.Full_JW_Ops[i]).dot(current_ket).toarray()[0][0].real)
-        comms.append(comm)
+        comm = 2*(hbra.dot(ops.Full_JW_Ops[i]).dot(current_ket).toarray()[0][0].real)
+        comms.append(abs(comm))
     idx = (np.argsort(comms))
     comms = list(np.array(comms)[idx])
-
-    ops.Full_JW_Ops = list(np.array(ops.Full_JW_Ops)[idx])
-
+    #ops.Full_JW_Ops = list(np.array(ops.Full_JW_Ops)[idx])
+    #ops.Full_Ops = list(np.array(ops.Full_Ops)[idx])
     HF_ket = copy.copy(ops.HF_ket)
     hbra = HF_ket.transpose().dot(ops.JW_hamiltonian)
     energies = []
@@ -92,33 +95,46 @@ def STARLIGHT(molecule, ops, theta_tightness, logging):
     H = ops.JW_hamiltonian
     for i in range(0,len(ops.Full_JW_Ops)):
         A = copy.copy(ops.Full_JW_Ops[i])
-        Aket = A @ HF_ket
-        grad = 2*hbra.dot(Aket).toarray()[0][0].real
+        Aket = A.dot(HF_ket)
+        print(ops.Full_Ops[i])
+        grad = 2*HF_ket.T.dot(H).dot(A).dot(HF_ket).toarray()[0][0].real
         gradient.append(grad)
         hessian.append([])
         for j in range(0, len(ops.Full_JW_Ops)):
             B = copy.copy(ops.Full_JW_Ops[j])
-            hess = 2*HF_ket.T.dot(B.dot(A).dot(H)-B.dot(H).dot(A)).dot(HF_ket).toarray()[0][0].real
+            if len(ops.Full_JW_Ops)-i == 1 and len(ops.Full_JW_Ops)-j == 1:
+                print(2*HF_ket.T.dot(H.dot(A).dot(B).dot(HF_ket)).toarray()[0][0].real)
+                print(-2*HF_ket.T.dot(B.dot(H).dot(A).dot(HF_ket)).toarray()[0][0].real)
+             
+            hess = 2*HF_ket.T.dot(H.dot(A).dot(B)-B.dot(H).dot(A)).dot(HF_ket).toarray()[0][0].real
             hessian[-1].append(hess)
     gradient = np.array(gradient)
+    print(ops.Full_Ops)
+
     hessian = np.array(hessian)
-    print(gradient)
     print(hessian)
     hinv = np.linalg.pinv(hessian)
     dE = -.5*(gradient.T).dot(hinv).dot(gradient)
-
+    print('STARLIGHT Correction: %12.8f eH'%(dE))
     #dE = 2*gradient.T.dot(hterms).dot(hessian.dot(hterms)-np.identity(len(gradient))).dot(gradient)
     energy = molecule.hf_energy+dE
-    print('Starlight Energy: %12.8f eH'%(energy))
+    print('STARLIGHT Energy: %12.8f eH'%(energy))
     print('HF Energy: %12.8f eH'%(molecule.hf_energy))
     print('MP2 Energy: %12.8f eH'%(molecule.mp2_energy))
     print('CCSD Energy: %12.8f eH'%(molecule.ccsd_energy))
+    try:    
+        print('CEPA Energy: %12.8f eH'%(molecule.cepa_energy))
+    except:
+        pass    
     print('CI Energy: %12.8f eH'%(molecule.fci_energy))
     print('Starlight Error: %12.8f eH'%(energy-molecule.fci_energy))
     print('HF Error: %12.8f eH'%(molecule.hf_energy-molecule.fci_energy))
     print('MP2 Error: %12.8f eH'%(molecule.mp2_energy-molecule.fci_energy))
     print('CCSD Error: %12.8f eH'%(molecule.ccsd_energy-molecule.fci_energy))
-
+    try:
+        print('CEPA Error: %12.8f eH'%(molecule.cepa_energy-molecule.fci_energy))
+    except:
+        pass
 
     return energy
         
@@ -189,7 +205,8 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
             vector.append(-abs(comm)) 
             if abs(comm)>abs(grad):
                 grad = comm
-                num = i 
+                num = i
+
         if num == None:
              print('Pool exhausted.')
              break
@@ -230,7 +247,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         ansatz.dump(str(wfile))
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
-
+        print(parameters)
         '''
         print('Newest full ansatz:\n')
         for term in range(0, len(ansatz.Full_Ops)):
@@ -301,9 +318,7 @@ def FOLD(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
             logging.getLogger().setLevel(logging.INFO)
             comm = OptRes.fun
             vector.append(-abs(comm))
-
             if comm<grad:
-                print(comm)
                 grad = comm
                 num = i
                 params = OptRes.x

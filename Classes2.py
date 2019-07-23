@@ -219,6 +219,7 @@ class Operator_Bank:
               self.Full_SQ_Ops, self.Full_Ops = zip(*c)         
          for op in self.Full_SQ_Ops:
              op = openfermion.normal_ordered(op)
+
              if op.many_body_order()>0:
                  self.Full_JW_Ops.append(openfermion.transforms.get_sparse_operator(op, n_qubits = self.molecule.n_qubits))
          #Apply filters
@@ -247,7 +248,6 @@ class Operator_Bank:
 
     def PQRS(self):
 
-        #Singles
         #Singles
         for i in range(0, self.molecule.n_orbitals*2):
              for a in range(0, self.molecule.n_orbitals*2):
@@ -526,32 +526,34 @@ class Operator_Bank:
         #aa
         for i in self.aoccs:
             for a in self.anoccs:
-                one_elec = openfermion.FermionOperator(((a-self.ecp*2,1),(i-self.ecp*2,0)))-openfermion.FermionOperator(((i-self.ecp*2,1),(a-self.ecp*2,0)))
+                one_elec = 2**-.5*openfermion.FermionOperator(((a-self.ecp*2,1),(i-self.ecp*2,0)))-2**-.5*openfermion.FermionOperator(((i-self.ecp*2,1),(a-self.ecp*2,0)))
                 self.SQ_Singles.append(one_elec)
                 self.Singles.append([a-self.ecp*2,i-self.ecp*2])
 
         #bb
         for i in self.boccs:
             for a in self.bnoccs:
-                one_elec = openfermion.FermionOperator(((a-self.ecp*2,1),(i-self.ecp*2,0)))-openfermion.FermionOperator(((i-self.ecp,1),(a-self.ecp,0)))
+                one_elec = 2**-.5*openfermion.FermionOperator(((a-self.ecp*2,1),(i-self.ecp*2,0)))-2**-.5*openfermion.FermionOperator(((i-self.ecp,1),(a-self.ecp,0)))
                 self.SQ_Singles.append(one_elec)
                 self.Singles.append([a-self.ecp,i-self.ecp])
 
         #Doubles
         occs = []
         noccs = []
+
         for i in range(0, self.molecule.n_electrons):
             for j in range(i+1, self.molecule.n_electrons):
                 occs.append([i-self.ecp*2,j-self.ecp*2])
         for a in range(self.molecule.n_electrons, self.molecule.n_orbitals*2):
             for b in range(a+1, self.molecule.n_orbitals*2):
                 noccs.append([a-self.ecp*2,b-self.ecp*2])
+
         for occ in occs:
             for nocc in noccs:
                 j, i = occ
                 b, a = nocc
                 if a%2+b%2==i%2+j%2:
-                    two_elec = openfermion.FermionOperator(((a,1),(b,1),(i,0),(j,0)))-openfermion.FermionOperator(((j,1),(i,1),(b,0),(a,0)))
+                    two_elec = 2**-.5*openfermion.FermionOperator(((a,1),(b,1),(i,0),(j,0)))-2**-.5*openfermion.FermionOperator(((j,1),(i,1),(b,0),(a,0)))
                     self.Doubles.append([a,i,b,j])
                     self.SQ_Doubles.append(two_elec)
 
@@ -565,7 +567,6 @@ class Operator_Bank:
                  one_elec = openfermion.normal_ordered(one_elec)
                  norm = 0
                  for term in one_elec.terms:
-
                      norm += one_elec.terms[term]*one_elec.terms[term]
                  if one_elec.many_body_order()>0 and norm!=0:
 
@@ -593,8 +594,13 @@ class Operator_Bank:
                           two_elec += openfermion.FermionOperator(((2*a+1-self.ecp*2,1),    (2*b-self.ecp*2,1),   (2*i-self.ecp*2,0),    (2*j+1-self.ecp*2,0)))
                           norm = 0
                           two_elec -= openfermion.hermitian_conjugated(two_elec)
+
+
                           two_elec = openfermion.normal_ordered(two_elec)
+
+
                           for term in two_elec.terms:
+
                               norm += two_elec.terms[term]*two_elec.terms[term]
                           if two_elec.many_body_order()>0 and norm!=0:
                               self.SQ_Doubles.append(two_elec/np.sqrt(norm))
@@ -607,11 +613,13 @@ class Operator_Bank:
                           norm = 0
                           two_elec -= openfermion.hermitian_conjugated(two_elec)
                           two_elec = openfermion.normal_ordered(two_elec)
+
                           for term in two_elec.terms:
                               norm += two_elec.terms[term]*two_elec.terms[term]
 
                           if two_elec.many_body_order()>0 and norm!=0:
                               self.SQ_Doubles.append(two_elec/np.sqrt(norm))
+
                               self.Doubles.append([a-self.ecp,b-self.ecp,i-self.ecp,j-self.ecp])
 
          if self.intra!=None:

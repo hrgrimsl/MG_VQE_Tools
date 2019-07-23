@@ -1,9 +1,9 @@
 basis sto-3g
 multiplicity 1
 charge 0
-psi_file H6random
+psi_file kasfhs
 atom H 0 0 0
-atom H 0 0 .75
+atom H 0 0 1.5
 
 n_fdoccs 0
 op_kwarg include_pqrs False

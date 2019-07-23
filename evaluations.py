@@ -26,12 +26,13 @@ def Numerical_Hessian(ansatz, ops, molecule, parameters, scipy_hessians):
     Hessian = []
     operations = ops.Full_JW_Ops+ansatz.Full_JW_Ops
     params = []
-    for i in range(0, len(ops.Full_JW_Ops)):
+    for i in reversed(range(0, len(ops.Full_JW_Ops))):
         params.append(0)
     params += list(parameters)
-    for parameter1 in range(0, len(params)):
-        grad = (scipy.optimize.approx_fprime(params, Numerical_Gradient, 1e-6, operations, parameter1, ops, ansatz))
-        Hessian.append(grad)
+    for parameter1 in (range(0, len(params))):
+        hess = (scipy.optimize.approx_fprime(params, Numerical_Gradient, 1e-6, operations, parameter1, ops, ansatz))
+        Hessian.append(hess)
+
     return (np.array(Hessian))
 
 def Numerical_Gradient(params, operations, parameter1, ops, ansatz):
@@ -40,7 +41,7 @@ def Numerical_Gradient(params, operations, parameter1, ops, ansatz):
 
 def Numerical_Energy(params, operations, ops):
     ket = copy.copy(ops.HF_ket)
-    for i in reversed(range(0, len(params))):
+    for i in (range(0, len(params))):
         ket = scipy.sparse.linalg.expm_multiply(params[i]*operations[i], ket)
     energy = ket.transpose().conj().dot(ops.JW_hamiltonian).dot(ket)
     return energy.toarray()[0][0].real           
