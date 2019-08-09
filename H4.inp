@@ -1,20 +1,21 @@
 basis sto-3g
-multiplicity 3
-psi_file scratcholi
+multiplicity 1
 charge 0
-output akfj
+psi_file H6random
 atom H 0 0 0
-atom H 0 0 1
-atom H .5 0 2
+atom H 0 0 1.5
 atom H 0 0 3
+atom H 0 0 4.5
 
-loc False
-
-op_kwarg include_pqrs False
-op_kwarg spin_adapt True
-
-
-method_kwarg algorithm ADAPT
-method_kwarg theta_tightness 1e-5
-method_kwarg ADAPT_tightness 1e-3
 n_fdoccs 0
+op_kwarg include_pqrs False
+output H6random
+op_kwarg spin_adapt True
+method_kwarg algorithm STARLIGHT
+op_kwarg repeats True
+method_kwarg theta_tightness 1e-10
+method_kwarg ADAPT_tightness 1e-7
+method_kwarg RADAPT_Seed None
+op_kwarg kup False
+Singular_threshold 1e-10
+

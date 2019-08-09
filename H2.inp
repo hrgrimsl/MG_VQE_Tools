@@ -1,18 +1,19 @@
-basis 6-31g
-multiplicity 3
-psi_file scratcholi
+basis sto-3g
+multiplicity 1
 charge 0
-output akfj
+psi_file kasfhs
 atom H 0 0 0
 atom H 0 0 1.5
 
-loc False
-
-op_kwarg include_pqrs False
-op_kwarg spin_adapt True
-
-
-method_kwarg algorithm UCC
-method_kwarg theta_tightness 1e-13
-method_kwarg ADAPT_tightness 1e-3
 n_fdoccs 0
+op_kwarg include_pqrs False
+output H6random
+op_kwarg spin_adapt True
+method_kwarg algorithm STARLIGHT
+op_kwarg repeats True
+method_kwarg theta_tightness 1e-10
+method_kwarg ADAPT_tightness 1e-7
+method_kwarg RADAPT_Seed None
+op_kwarg kup False
+Singular_threshold 1e-10
+
