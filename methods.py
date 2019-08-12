@@ -15,7 +15,7 @@ def Optimize(molecule, ops, logging, **kwargs):
     if algorithm == 'VQE':
         parameters = []
         for i in range(0, len(ops.Full_Ops)):
-            parameters.append(0)
+            parameters.append(random.random())
         outcome = VQE(molecule, parameters, ops, theta_tightness, logging)
     if algorithm == 'ADAPT' and ops.repeats == 'True':
         outcome = ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
@@ -234,7 +234,7 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         except:
             pass
         if abs(gradients[-1])<ADAPT_tightness:
-            if len(gradients) == 2:
+            if len(gradient,s) == 2:
                 OptRes = scipy.optimize.OptimizeResult(x=(), fun = molecule.hf_energy, nit = 0)
             continue
         ansatz.Full_JW_Ops.insert(0, ops.Full_JW_Ops[num])
@@ -242,12 +242,12 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         ansatz.indices.insert(0, num)
 
         parameters = list(parameters)
-        parameters.insert(0, 0)
+        parameters.insert(0,random.random())
         ansatz.parameters = list(parameters)
         ansatz.dump(str(wfile))
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
-        print(parameters)
+
         '''
         print('Newest full ansatz:\n')
         for term in range(0, len(ansatz.Full_Ops)):
@@ -322,6 +322,7 @@ def FOLD(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
                 grad = comm
                 num = i
                 params = OptRes.x
+
         print(grad)
         print('--------')
         if num==None:

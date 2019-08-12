@@ -163,9 +163,11 @@ class Operator_Bank:
              occ.append(2*i+1)
          for i in range(doccs, doccs+soccs):
              occ.append(2*i)
+         
 
          if self.molecule.occ!='None' and self.molecule.occ!=None:
              occ = self.molecule.occ
+         
          print('Electron configuration: '+str(occ))
 
 
@@ -210,6 +212,7 @@ class Operator_Bank:
 
          if self.flip == 'False':
              self.Full_Ops = self.Singles+self.Doubles
+             self.Full_SQ_Ops = self.Singles+self.Doubles
          else:
              self.Full_Ops = self.Doubles+self.Singles
              self.Full_SQ_Ops = self.SQ_Doubles+self.SQ_Singles
@@ -575,6 +578,7 @@ class Operator_Bank:
                      self.Singles.append([a-self.ecp,i-self.ecp])               
          
          if self.intra!=None:
+              print('Intra is '+str(self.intra))
               random.seed(int(self.intra))
               c = list(zip(self.SQ_Singles, self.Singles))
               random.shuffle(c)

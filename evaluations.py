@@ -6,6 +6,7 @@ def Trotter_SPE(parameters, ops):
     ket = copy.copy(ops.HF_ket)
     for i in reversed(range(0, len(parameters))):
         ket = scipy.sparse.linalg.expm_multiply(ops.Full_JW_Ops[i]*parameters[i], ket)
+    print(parameters)
     return ket.transpose().conj().dot(ops.JW_hamiltonian).dot(ket).toarray()[0][0].real
 
 def SPE(parameters, ops):
