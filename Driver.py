@@ -51,15 +51,15 @@ outcome = Optimize(molecule, ops, logging, **Get_Method_Kwargs(args.input))
 end = timer()
 
 h = (ops.JW_hamiltonian)
-
+logging.info(str(ops.Full_Ops))
 logging.info('HF ket = '+str(ops.HF_ket))
-
-
 logging.info('DETCI = '+str(molecule.CASCI))
 logging.info('Optimized energy = '+str(outcome.fun))
 logging.info('Error = '+str(outcome.fun-molecule.CASCI))
 logging.info('Iterations = '+str(outcome.nit))
 logging.info('Total time (s) = '+str(end-start))
 logging.info(str(len(outcome.x))+' parameters.')
+
+
 print('See output in '+str(args.output)+'!')
 

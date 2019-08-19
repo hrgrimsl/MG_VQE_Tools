@@ -212,7 +212,7 @@ class Operator_Bank:
 
          if self.flip == 'False':
              self.Full_Ops = self.Singles+self.Doubles
-             self.Full_SQ_Ops = self.Singles+self.Doubles
+             self.Full_SQ_Ops = self.SQ_Singles+self.SQ_Doubles
          else:
              self.Full_Ops = self.Doubles+self.Singles
              self.Full_SQ_Ops = self.SQ_Doubles+self.SQ_Singles
@@ -222,6 +222,7 @@ class Operator_Bank:
               random.shuffle(c)
               self.Full_SQ_Ops, self.Full_Ops = zip(*c)         
          for op in self.Full_SQ_Ops:
+
              op = openfermion.normal_ordered(op)
 
              if op.many_body_order()>0:

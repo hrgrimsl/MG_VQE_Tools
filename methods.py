@@ -5,6 +5,7 @@ import random
 import numpy as np
 
 def Optimize(molecule, ops, logging, **kwargs):
+    random.seed(0)
     algorithm = kwargs.get('algorithm', 'VQE')
     theta_tightness = float(kwargs.get('theta_tightness', '1e-5'))
     ADAPT_tightness = float(kwargs.get('ADAPT_tightness', '1e-5'))
@@ -25,7 +26,7 @@ def Optimize(molecule, ops, logging, **kwargs):
     if algorithm == 'GradSort':
         parameters = []
         for i in range(0, len(ops.Full_Ops)):
-            parameters.append(0)
+            parameters.append(random.random())
         outcome = GradSort(molecule, parameters, ops, theta_tightness, logging)
     if algorithm == 'ROANOKE':
         outcome = ADAPT_Minimize(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
@@ -901,7 +902,7 @@ def LADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
 def UCC(molecule, ops, theta_tightness, logging):
     parameters = []
     for i in range(0, len(ops.Full_Ops)):
-        parameters.append(0)
+        parameters.append(random.random())
     optimization = scipy.optimize.minimize(UCC_SPE, parameters, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False})
     ket = ops.HF_ket
     sum = ops.Full_JW_Ops[0]*optimization.x[0]
