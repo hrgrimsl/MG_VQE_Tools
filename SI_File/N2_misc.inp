@@ -1,0 +1,27 @@
+#PBS -l walltime=7:00:00:00
+#PBS -l nodes=1:ppn=24,pmem=4GB
+#PBS -q nmayhall_lab
+#PBS -A qcvt_doe
+#PBS -W group_list=nmayhall_lab
+
+cd MG_VQE_Tools
+source ~/.bashrc
+for j in {0..0}
+    do
+    python n2GO.py n2GO $j
+    python n2sGO.py n2sGO $j
+    python n2ucc.py n2ucc $j
+    for i in {0..2}
+       do
+       python Driver.py n2GO_$i n2GO_$i-$j &
+       python Driver.py n2sGO_$i n2sGO_$i-$j &
+       python Driver.py n2ucc_$i n2ucc_$i-$j &
+       sleep 1
+    done
+    wait
+    sleep 1
+done
+wait
+
+
+

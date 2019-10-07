@@ -1,0 +1,23 @@
+#PBS -l walltime=7:00:00:00
+#PBS -l nodes=1:ppn=24,pmem=4GB
+#PBS -q nmayhall_lab
+#PBS -A qcvt_doe
+#PBS -W group_list=nmayhall_lab
+
+cd MG_VQE_Tools
+source ~/.bashrc
+for j in {0..99}
+    do
+    python Write_H6.py h6_inter $j
+    for i in {0..59}
+       do
+       python Driver.py h6_inter_$i h6_inter_$i-$j &
+       sleep 1
+    done
+    wait
+    sleep 1
+done
+wait
+
+
+
