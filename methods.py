@@ -5,7 +5,7 @@ import random
 import numpy as np
 
 def Optimize(molecule, ops, logging, **kwargs):
-    random.seed(0)
+
     algorithm = kwargs.get('algorithm', 'VQE')
     theta_tightness = float(kwargs.get('theta_tightness', '1e-5'))
     ADAPT_tightness = float(kwargs.get('ADAPT_tightness', '1e-5'))
@@ -16,7 +16,7 @@ def Optimize(molecule, ops, logging, **kwargs):
     if algorithm == 'VQE':
         parameters = []
         for i in range(0, len(ops.Full_Ops)):
-            parameters.append(random.random())
+            parameters.append(0)
         outcome = VQE(molecule, parameters, ops, theta_tightness, logging)
     if algorithm == 'ADAPT' and ops.repeats == 'True':
         outcome = ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
@@ -26,7 +26,7 @@ def Optimize(molecule, ops, logging, **kwargs):
     if algorithm == 'GradSort':
         parameters = []
         for i in range(0, len(ops.Full_Ops)):
-            parameters.append(random.random())
+            parameters.append(0)
         outcome = GradSort(molecule, parameters, ops, theta_tightness, logging)
     if algorithm == 'ROANOKE':
         outcome = ADAPT_Minimize(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
@@ -243,9 +243,10 @@ def ADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile
         ansatz.indices.insert(0, num)
 
         parameters = list(parameters)
-        parameters.insert(0,random.random())
+        parameters.insert(0,0)
         ansatz.parameters = list(parameters)
-        ansatz.dump(str(wfile))
+        ansatz.dump(str(wfile)) 
+        parameters = [0 for i in len(parameters)]
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
 
@@ -343,7 +344,7 @@ def FOLD(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile)
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
         ansatz.indices.insert(0, num)        
         parameters = list(parameters)
-        parameters.insert(0, random.random())
+        parameters.insert(0, 0)
         ansatz.parameters = list(parameters)
         #ansatz.dump(str(wfile))
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
@@ -428,7 +429,7 @@ def ADAPT_Minimize(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfi
         ansatz.Full_Ops.insert(0, ops.Full_Ops[num])
         ansatz.indices.insert(0, num)        
         parameters = list(parameters)
-        parameters.insert(0, random.random())
+        parameters.insert(0, 0)
         ansatz.parameters = list(parameters)
         #ansatz.dump(str(wfile))
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
@@ -496,7 +497,7 @@ def sGO(molecule, ops, theta_tightness, ADAPT_tightness, logging, rfile, wfile):
         parameters.insert(0, 0)
         ansatz.parameters = list(parameters)
         ansatz.dump(str(wfile))
-
+        parameters = [0 for i in parameters]
         OptRes = VQE(molecule, parameters, ansatz, theta_tightness, logging)
         parameters = OptRes.x
 
@@ -902,7 +903,7 @@ def LADAPT(molecule, ops, theta_tightness, ADAPT_tightness, logging):
 def UCC(molecule, ops, theta_tightness, logging):
     parameters = []
     for i in range(0, len(ops.Full_Ops)):
-        parameters.append(random.random())
+        parameters.append(0)
     optimization = scipy.optimize.minimize(UCC_SPE, parameters, args = (ops), method = 'BFGS', options = {'gtol': float(theta_tightness), 'disp': False})
     ket = ops.HF_ket
     sum = ops.Full_JW_Ops[0]*optimization.x[0]
